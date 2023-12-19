@@ -5,7 +5,13 @@ import 'https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.esm.js';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-    // Your Firebase configuration here
+    apiKey: "AIzaSyAvsJFPYeoKoUYvryhpp-saOUGODQOzMeI",
+    authDomain: "star-stable-dressage.firebaseapp.com",
+    projectId: "star-stable-dressage",
+    storageBucket: "star-stable-dressage.appspot.com",
+    messagingSenderId: "170202438317",
+    appId: "1:170202438317:web:580c18df86f56f84d20424",
+    measurementId: "G-FTHYGB3Q1M"
 };
 
 // Initialize Firebase
@@ -16,3 +22,5 @@ const db = app.firestore();
 
 // Export the necessary objects
 export { app, analytics, db };
+
+
