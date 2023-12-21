@@ -7,13 +7,26 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<div class="outerHeader">
+    <div class="header">
+        <h1>Star Stable Dressage Dictionary</h1>
+        <a href="/admin.html" class="button"><span>Admin Sign In</span></a>
+    </div>
+</div>
 <div class="container">
-
-    <!-- Add this button for signing in -->
-    <button onclick="signIn()">Sign In</button>
-
-    <input type="text" id="searchInput" placeholder="Search moves...">
-    <div id="results"></div>
+    <input type="text" class="searchBar" placeholder="Search dictionary">
+    <div class="results">
+        <div class="dictEntry" id="dict1">
+            <p class="dictName">Curl</p>
+            <p class="dictSpacer">-</p>
+            <p class="dictDef">On go, hold your arrow key in the gait (speed) you are currently in to complete a full circle.</p>
+        </div>
+        <div class="dictEntry" id="dict2">
+            <p class="dictName">Fate Curl</p>
+            <p class="dictSpacer">-</p>
+            <p class="dictDef"><span class="dictLink" onclick="">Curl</span> in the direction called, then <span class="dictLink" onclick="">curl</span> in the opposite direction.</p>
+        </div>
+    </div>
 
 </div>
 <script src="app.js"></script>
