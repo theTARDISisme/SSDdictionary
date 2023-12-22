@@ -1,9 +1,3 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -17,82 +11,195 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+console.log(firebase);
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-// Function to fetch data from Firestore
-function fetchData() {
-    db.collection("moves").onSnapshot((snapshot) => {
-        const resultsDiv = document.getElementById("results");
-        resultsDiv.innerHTML = ""; // Clear previous results
+// Function to fetch data from Firestore with extended search functionality
+async function fetchData(searchTerm, searchCategory) {
+    const dictionaryContainer = document.getElementById('dictionary-container');
+    const loadingIndicator = document.getElementById('loading-indicator');
 
-        snapshot.forEach((doc) => {
-            const moveData = doc.data();
-            const moveElement = document.createElement("div");
-            moveElement.innerHTML = `<h3>${moveData.name}</h3>
-                                   <p>${moveData.description}</p>
-                                   <img src="${moveData.gifUrl}" alt="${moveData.name}">`;
-            resultsDiv.appendChild(moveElement);
+    // Reference to your Firestore collection
+    const dictionaryCollection = db.collection('dictionary'); // Replace with your actual collection name
+
+    try {
+        // Get all documents from the collection
+        const querySnapshot = await dictionaryCollection.get();
+
+        dictionaryContainer.innerHTML = ''; // Clear existing entries
+
+        if (querySnapshot.empty) {
+            console.log('No documents found.');
+            return;
+        }
+
+        const filteredDocs = [];
+        const searchTermLower = searchTerm.toLowerCase();
+
+        // Filter documents based on the search category and term
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            switch (searchCategory) {
+                case 'dictName':
+                    if (data.dictName && data.dictName.toLowerCase().includes(searchTermLower)) {
+                        filteredDocs.push(data);
+                    }
+                    break;
+                case 'dictDef':
+                    if (data.dictDef && data.dictDef.toLowerCase().includes(searchTermLower)) {
+                        filteredDocs.push(data);
+                    }
+                    break;
+                case 'dictTag':
+                    if (data.dictTag && data.dictTag.toLowerCase().includes(searchTermLower)) {
+                        filteredDocs.push(data);
+                    }
+                    break;
+                case 'all':
+                    if (
+                        (data.dictName && data.dictName.toLowerCase().includes(searchTermLower)) ||
+                        (data.dictTag && data.dictTag.toLowerCase().includes(searchTermLower)) ||
+                        (data.dictDef && data.dictDef.toLowerCase().includes(searchTermLower))
+                    ) {
+                        filteredDocs.push(data);
+                    }
+                    break;
+                default:
+                    break;
+            }
         });
-    });
-}
 
-// Trigger fetchData on page load
-window.onload = fetchData;
-
-// Function to handle user authentication
-function signIn() {
-    // Use Firebase authentication methods here
-    // For example, you can use Google authentication
-    const provider = new firebase.auth.GoogleAuthProvider();
-
-    auth.signInWithPopup(provider)
-        .then((result) => {
-            const user = result.user;
-            console.log(`Signed in as ${user.displayName}`);
-        })
-        .catch((error) => {
-            console.error(error.message);
+        // Display filtered documents
+        filteredDocs.forEach((data) => {
+            const entry = createDictionaryEntry(data);
+            dictionaryContainer.appendChild(entry);
         });
-}
 
-// Function to add or edit entries (requires user authentication)
-function addOrEditEntry(moveName, moveDescription, gifUrl) {
-    const user = auth.currentUser;
+        // Show the container and hide the loading indicator after data is loaded
 
-    if (user) {
-        db.collection("moves").doc(moveName).set({
-            name: moveName,
-            description: moveDescription,
-            gifUrl: gifUrl,
-        }, { merge: true })
-            .then(() => {
-                console.log(`Entry ${moveName} successfully added/edited`);
-            })
-            .catch((error) => {
-                console.error(`Error adding/editing entry: ${error}`);
-            });
-    } else {
-        console.error("User not authenticated");
+    } catch (error) {
+        console.error('Error fetching documents:', error);
     }
 }
 
-// Function to handle search as you type
-document.getElementById("searchInput").addEventListener("input", function () {
-    const searchTerm = this.value.toLowerCase();
+window.onload = function () {
 
-    db.collection("moves").where("name", ">=", searchTerm).where("name", "<=", searchTerm + "\uf8ff")
-        .onSnapshot((snapshot) => {
-            const resultsDiv = document.getElementById("results");
-            resultsDiv.innerHTML = ""; // Clear previous results
+// Function to handle search input changes
+    document.querySelector('.searchBar').addEventListener('input', function (event) {
+        const searchTerm = event.target.value.trim();
+        const searchCategory = document.querySelector('.searchCategory').value;
+        fetchData(searchTerm, searchCategory);
+    });
 
-            snapshot.forEach((doc) => {
-                const moveData = doc.data();
-                const moveElement = document.createElement("div");
-                moveElement.innerHTML = `<h3>${moveData.name}</h3>
-                                       <p>${moveData.description}</p>
-                                       <img src="${moveData.gifUrl}" alt="${moveData.name}">`;
-                resultsDiv.appendChild(moveElement);
-            });
-        });
-});
+// Function to handle dropdown (select) changes
+    document.querySelector('.searchCategory').addEventListener('change', function () {
+        const searchTerm = document.querySelector('.searchBar').value.trim();
+        const searchCategory = document.querySelector('.searchCategory').value;
+        fetchData(searchTerm, searchCategory);
+    });
+// Initially load all entries
+    fetchData('', 'all');
+
+
+}
+
+// Function to toggle visibility of the image
+function toggleImg(clickedElement) {
+    const entry = clickedElement;
+    const image = entry.querySelector('.dictImg');
+
+    // Toggle the visibility of the image
+    if (image.style.display === 'none' || image.style.display === '') {
+        image.style.display = 'block';
+    } else {
+        image.style.display = 'none';
+    }
+}
+
+// Function to toggle dropdown visibility
+function toggleDropdown(iconElement) {
+    const entry = iconElement.closest('.dictEntry');
+    const image = entry.querySelector('.dictImg');
+
+    // Toggle the visibility of the image
+    if (image.style.display === 'none' || image.style.display === '') {
+        image.style.display = 'block';
+        iconElement.textContent = '▲'; // Change icon to up arrow
+    } else {
+        image.style.display = 'none';
+        iconElement.textContent = '▼'; // Change icon to down arrow
+    }
+}
+
+// Function to create a dictionary entry with dynamic links
+function createDictionaryEntry(data) {
+    const entry = document.createElement('div');
+    entry.classList.add('dictEntry');
+
+    // Parse dictDef for references and create dynamic links
+    const parsedDictDef = parseDictDef(data.dictDef);
+
+    entry.innerHTML = `
+        <p class="dictTag">${data.dictTag}</p>
+        <div class="dictText">
+            <p class="dictName">${data.dictName}</p>
+            <p class="dictSpacer">-</p>
+            <p class="dictDef">${parsedDictDef}</p>
+            ${data.dictImg ? '<div class="dropdownIcon" onclick="toggleDropdown(this)">▼</div>' : ''}
+        </div>
+        <img class="dictImg" src="${data.dictImg}">
+    `;
+
+    return entry;
+}
+
+
+// Function to parse dictDef for references and create dynamic links
+function parseDictDef(dictDef) {
+    const regex = /\{\{([^}]+)\}\}/g;
+    return dictDef.replace(regex, (match, dictName) => {
+        return `<span class="dictLink" onclick="handleDictLinkClick('${dictName}')">${dictName}</span>`;
+    });
+}
+
+// Function to handle click on dynamic links in dictDef
+async function handleDictLinkClick(referencedDictName) {
+    const searchTerm = referencedDictName.trim().toLowerCase();
+    const searchCategory = 'dictName';
+
+    const searchInput = document.querySelector('.searchBar');
+    const currentSearchTerm = searchInput.value.trim();
+    const currentSearchCategory = document.querySelector('.searchCategory').value;
+
+    // Perform a new search based on the current content of the search bar
+    await fetchData(currentSearchTerm, currentSearchCategory);
+
+    try {
+        // Get all documents from the collection
+        const querySnapshot = await db.collection('dictionary').get();
+
+        if (querySnapshot.empty) {
+            console.log('No documents found.');
+            return;
+        }
+
+        const referencedEntry = Array.from(querySnapshot.docs).find(
+            (doc) => doc.data().dictName.toLowerCase() === searchTerm
+        );
+
+        if (referencedEntry) {
+            // Create the referenced entry and append it to the container
+            const referencedData = referencedEntry.data();
+            const referencedEntryElement = createDictionaryEntry(referencedData);
+            document.getElementById('dictionary-container').appendChild(referencedEntryElement);
+
+            // Scroll to the newly displayed entry
+            referencedEntryElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+        } else {
+            console.log('Referenced entry not found.');
+        }
+    } catch (error) {
+        console.error('Error fetching documents:', error);
+    }
+}
