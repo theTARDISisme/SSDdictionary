@@ -8,6 +8,22 @@
     <script src="https://www.gstatic.com/firebasejs/9.2.0/firebase-compat.js"></script>
     <script src="firebase-config.js"></script>
     <script src="auth.js"></script>
+    <script>
+        //Check if the user is authenticated
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in
+                console.log('User is signed in:', user);
+                window.location.href = '/admin';
+                // You can load the content of your admin.html page here
+            } else {
+                // User is signed out
+                console.log('User is signed out');
+                // Redirect to the login page if not authenticated
+
+            }
+        });
+    </script>
 </head>
 <body>
 <div class="header">
