@@ -53,6 +53,7 @@ a.button {
     align-items: center;
     height: 4em;
     transition: all 150ms ease-in-out;
+    cursor: pointer;
 }
 
 a.button:hover {
