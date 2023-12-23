@@ -190,7 +190,7 @@ function parseDictDef(dictDef) {
     const regex = /\{\{([^}]+?)\}\}(\(([^)]+?)\))?/g;
     return dictDef.replace(regex, (match, displayText, group2, searchTerm) => {
         const linkText = displayText.trim();
-        const linkSearchTerm = (searchTerm || '').trim();
+        const linkSearchTerm = (searchTerm || linkText).trim();
         return `<span class="dictLink" onclick="handleDictLinkClick('${linkSearchTerm}')">${linkText}</span>`;
     });
 }
