@@ -3,25 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel</title>
+    <title>Admin - SSD Dictionary</title>
+    <link rel="stylesheet" href="admin-styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.2.0/firebase-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+    <script src="auth.js"></script>
+    <script src="admin.js"></script>
 </head>
 <body>
-<form id="addDefinitionForm">
-    <label for="moveName">Move Name:</label>
-    <input type="text" id="moveName" required>
+<div class="header">
+    <h1>Star Stable Dressage Dictionary</h1>
+    <a class="button" onClick="signOut()">Sign Out</a>
+</div>
 
-    <label for="moveDescription">Move Description:</label>
-    <textarea id="moveDescription" required></textarea>
+<div class="container">
+    <div class="searchArea">
+        <input type="text" class="searchBar" placeholder="Search dictionary">
+        <select class="searchCategory">
+            <optgroup label="Search By">
+                <option value="dictName">Move Name</option>
+                <option value="dictDef">Definition</option>
+                <option value="dictTag">Category</option>
+                <option value="all">All</option>
+        </select>
+    </div>
+    <div id="adminDictionaryContainer"></div>
+    <div class="results" id="dictionary-container">
+        <div id="loading-indicator">Loading...</div>
+    </div>
+</div>
 
-    <label for="gifUrl">GIF URL:</label>
-    <input type="text" id="gifUrl" required>
-
-    <!-- Specify type="module" in the script tag -->
-    <button type="button" onclick="addDefinition()">Add Definition</button>
-</form>
-
-<!-- Specify type="module" in the script tags -->
-<script type="module" src="firebaseConfig.js"></script>
-<script type="module" src="admin.js"></script>
+<script>
+</script>
 </body>
 </html>

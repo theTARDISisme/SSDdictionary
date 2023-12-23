@@ -17,11 +17,17 @@ div.container {
     }
 }
 
+@media (max-width: 650px) {
+    .dictText .adminButtons {
+        max-height: unset;
+    }
+}
+
 
 div.header {
     display: flex;
     box-sizing:border-box;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     width: 100%;
     background-color: #ffffff;
@@ -134,4 +140,25 @@ div.dictEntry {
 
 .dropdownIcon:hover {
     color: #bdbdbd;
+}
+
+.adminButtons {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    max-height: 55px;
+    gap: 10px;
+    align-items: center;
+    max-width: 80px;
+    min-width: 30px;
+}
+
+.adminButtons p {
+    margin: 0;
+    cursor: pointer;
+}
+
+.adminButtons p:hover {
+    color: #bdbdbd;
+
 }

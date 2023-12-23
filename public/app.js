@@ -1,19 +1,6 @@
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-    apiKey: "AIzaSyAvsJFPYeoKoUYvryhpp-saOUGODQOzMeI",
-    authDomain: "star-stable-dressage.firebaseapp.com",
-    projectId: "star-stable-dressage",
-    storageBucket: "star-stable-dressage.appspot.com",
-    messagingSenderId: "170202438317",
-    appId: "1:170202438317:web:580c18df86f56f84d20424",
-    measurementId: "G-FTHYGB3Q1M"
-};
 
-// Initialize Firebase
-console.log(firebase);
-const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+
 
 // Function to fetch data from Firestore with extended search functionality
 async function fetchData(searchTerm, searchCategory) {
@@ -37,23 +24,38 @@ async function fetchData(searchTerm, searchCategory) {
         const filteredDocs = [];
         const searchTermLower = searchTerm.toLowerCase();
 
-        // Filter documents based on the search category and term
+        const tagOrder = [
+            'RA Diagram',
+            'Fundamentals',
+            'Gaps & Alignment',
+            'Meter System',
+            'Flats & Exits',
+            'Circle Moves',
+            'Follow Moves',
+            'Beginner',
+            'Intermediate',
+            'Advanced',
+            'Elite',
+            'Community Moves'
+        ];
+
+        // Filter and sort documents based on the search category and term
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             switch (searchCategory) {
                 case 'dictName':
                     if (data.dictName && data.dictName.toLowerCase().includes(searchTermLower)) {
-                        filteredDocs.push(data);
+                        filteredDocs.push({ ...data, docId: doc.id });
                     }
                     break;
                 case 'dictDef':
                     if (data.dictDef && data.dictDef.toLowerCase().includes(searchTermLower)) {
-                        filteredDocs.push(data);
+                        filteredDocs.push({ ...data, docId: doc.id });
                     }
                     break;
                 case 'dictTag':
                     if (data.dictTag && data.dictTag.toLowerCase().includes(searchTermLower)) {
-                        filteredDocs.push(data);
+                        filteredDocs.push({ ...data, docId: doc.id });
                     }
                     break;
                 case 'all':
@@ -62,7 +64,7 @@ async function fetchData(searchTerm, searchCategory) {
                         (data.dictTag && data.dictTag.toLowerCase().includes(searchTermLower)) ||
                         (data.dictDef && data.dictDef.toLowerCase().includes(searchTermLower))
                     ) {
-                        filteredDocs.push(data);
+                        filteredDocs.push({ ...data, docId: doc.id });
                     }
                     break;
                 default:
@@ -70,18 +72,26 @@ async function fetchData(searchTerm, searchCategory) {
             }
         });
 
-        // Display filtered documents
+        // Sort filtered documents by dictTag and dictIndex
+        filteredDocs.sort((a, b) => {
+            const tagComparison = tagOrder.indexOf(a.dictTag) - tagOrder.indexOf(b.dictTag);
+            if (tagComparison !== 0) {
+                return tagComparison;
+            }
+            return a.dictIndex - b.dictIndex;
+        });
+
+        // Display sorted documents
         filteredDocs.forEach((data) => {
             const entry = createDictionaryEntry(data);
             dictionaryContainer.appendChild(entry);
         });
-
-        // Show the container and hide the loading indicator after data is loaded
-
     } catch (error) {
         console.error('Error fetching documents:', error);
     }
 }
+
+
 
 window.onload = function () {
 
@@ -140,9 +150,16 @@ function createDictionaryEntry(data) {
     // Parse dictDef for references and create dynamic links
     const parsedDictDef = parseDictDef(data.dictDef);
 
+    // Check if it's on the admin page and add buttons if true
+    const isAdminPage = document.getElementById('adminDictionaryContainer') !== null;
+
+    entry.dataset.docId = data.docId;
+    entry.dataset.dictIndex = data.dictIndex;
+
     entry.innerHTML = `
         <p class="dictTag">${data.dictTag}</p>
         <div class="dictText">
+            ${isAdminPage ? createAdminButtons(data.docId, data.dictIndex) : ''}
             <p class="dictName">${data.dictName}</p>
             <p class="dictSpacer">-</p>
             <p class="dictDef">${parsedDictDef}</p>
@@ -150,18 +167,39 @@ function createDictionaryEntry(data) {
         </div>
         <img class="dictImg" src="${data.dictImg}">
     `;
-
     return entry;
 }
+
+function createAdminButtons(docId, dictIndex) {
+    return `
+        <p class="dictIndex">${dictIndex}</p>
+        <div class="adminButtons">
+            <p class="upButton" onclick="moveEntryUp('${docId}')">↑</p>
+            <p class="downButton" onclick="moveEntryDown('${docId}')">↓</p>
+            <p class="deleteButton" onclick="deleteEntry(this)">×</p>
+            <p class="editButton" onclick="editEntry(this)">✎</p>
+        </div>
+    `;
+}
+
+
 
 
 // Function to parse dictDef for references and create dynamic links
 function parseDictDef(dictDef) {
-    const regex = /\{\{([^}]+)\}\}/g;
-    return dictDef.replace(regex, (match, dictName) => {
-        return `<span class="dictLink" onclick="handleDictLinkClick('${dictName}')">${dictName}</span>`;
+    const regex = /\{\{([^}]+?)\}\}(\(([^)]+?)\))?/g;
+    return dictDef.replace(regex, (match, displayText, group2, searchTerm) => {
+        const linkText = displayText.trim();
+        const linkSearchTerm = (searchTerm || '').trim();
+        return `<span class="dictLink" onclick="handleDictLinkClick('${linkSearchTerm}')">${linkText}</span>`;
     });
 }
+
+
+
+
+
+
 
 // Function to handle click on dynamic links in dictDef
 async function handleDictLinkClick(referencedDictName) {

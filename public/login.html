@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - SSD Dictionary</title>
+    <link rel="stylesheet" href="login-styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.2.0/firebase-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+</head>
+<body>
+<div class="header">
+    <h1>SSD Dictionary - Admin Login</h1>
+</div>
+<div class="container">
+    <form id="loginForm" onsubmit="signIn(document.getElementById('email').value, document.getElementById('password').value); return false;">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+        <input type="submit" style="display: none" />
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+
+        <button type="submit">Sign In</button>    </form>
+    <div id="error-message" style="color: #a40707;"></div>
+</div>
+
+</body>
+</html>
