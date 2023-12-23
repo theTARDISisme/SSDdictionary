@@ -17,9 +17,11 @@ async function moveEntryUp(entryId) {
     try {
         const entryRef = db.collection('dictionary').doc(entryId);
 
-        // Get the current entry's index
-        const currentEntry = await entryRef.get();
-        const currentEntryIndex = currentEntry.data().dictIndex;
+        // Get the current entry's data
+        const currentEntrySnapshot = await entryRef.get();
+        const currentEntryData = currentEntrySnapshot.data();
+        const currentEntryIndex = currentEntryData.dictIndex;
+        const currentEntryTag = currentEntryData.dictTag;
 
         if (currentEntryIndex === 0) {
             // Entry is already at the top, no need to move up
@@ -27,18 +29,26 @@ async function moveEntryUp(entryId) {
             return;
         }
 
-        // Update the current entry and the lower entry in a transaction
+        // Find the lower entry within the same category
+        const lowerEntrySnapshot = await db.collection('dictionary')
+            .where('dictTag', '==', currentEntryTag)
+            .where('dictIndex', '==', currentEntryIndex - 1)
+            .limit(1)
+            .get();
+
+        // Update the current entry's index
         await db.runTransaction(async (transaction) => {
             transaction.update(entryRef, { dictIndex: firebase.firestore.FieldValue.increment(-1) });
-
-            // Find and update the lower entry
-            const lowerEntrySnapshot = await db.collection('dictionary').where('dictIndex', '==', currentEntryIndex - 1).limit(1).get();
-
-            if (!lowerEntrySnapshot.empty) {
-                const lowerEntryRef = lowerEntrySnapshot.docs[0].ref;
-                transaction.update(lowerEntryRef, { dictIndex: firebase.firestore.FieldValue.increment(1) });
-            }
         });
+
+        if (!lowerEntrySnapshot.empty) {
+            const lowerEntryRef = lowerEntrySnapshot.docs[0].ref;
+
+            // Update the lower entry's index
+            await db.runTransaction(async (transaction) => {
+                transaction.update(lowerEntryRef, { dictIndex: firebase.firestore.FieldValue.increment(1) });
+            });
+        }
 
         console.log('Entry moved up successfully.');
         // Refresh the displayed entries after the move
@@ -52,26 +62,32 @@ async function moveEntryDown(entryId) {
     try {
         const entryRef = db.collection('dictionary').doc(entryId);
 
-        // Get the current entry's index
-        const currentEntry = await entryRef.get();
-        const currentEntryIndex = currentEntry.data().dictIndex;
+        // Get the current entry's data
+        const currentEntrySnapshot = await entryRef.get();
+        const currentEntryData = currentEntrySnapshot.data();
+        const currentEntryIndex = currentEntryData.dictIndex;
+        const currentEntryTag = currentEntryData.dictTag;
 
-        // Find and update the lower entry
-        const lowerEntrySnapshot = await db.collection('dictionary').where('dictIndex', '==', currentEntryIndex + 1).limit(1).get();
+        // Find the higher entry within the same category
+        const higherEntrySnapshot = await db.collection('dictionary')
+            .where('dictTag', '==', currentEntryTag)
+            .where('dictIndex', '==', currentEntryIndex + 1)
+            .limit(1)
+            .get();
 
-        if (lowerEntrySnapshot.empty) {
-            // Entry is already at the bottom, no need to move down
-            console.log('Entry is already at the bottom.');
-            return;
-        }
-
-        // Update the current entry and the lower entry in a transaction
+        // Update the current entry's index
         await db.runTransaction(async (transaction) => {
             transaction.update(entryRef, { dictIndex: firebase.firestore.FieldValue.increment(1) });
-
-            const lowerEntryRef = lowerEntrySnapshot.docs[0].ref;
-            transaction.update(lowerEntryRef, { dictIndex: firebase.firestore.FieldValue.increment(-1) });
         });
+
+        if (!higherEntrySnapshot.empty) {
+            const higherEntryRef = higherEntrySnapshot.docs[0].ref;
+
+            // Update the higher entry's index
+            await db.runTransaction(async (transaction) => {
+                transaction.update(higherEntryRef, { dictIndex: firebase.firestore.FieldValue.increment(-1) });
+            });
+        }
 
         console.log('Entry moved down successfully.');
         // Refresh the displayed entries after the move
@@ -80,7 +96,6 @@ async function moveEntryDown(entryId) {
         console.error('Error moving entry down:', error);
     }
 }
-
 
 
 
