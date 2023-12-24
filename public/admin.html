@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - SSD Dictionary</title>
+    <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="admin-styles.css">
     <script src="https://www.gstatic.com/firebasejs/9.2.0/firebase-compat.js"></script>
     <script src="firebase-config.js"></script>
@@ -14,7 +15,10 @@
 <body>
 <div class="header">
     <h1>Star Stable Dressage Dictionary</h1>
-    <a class="button" onClick="signOut()">Sign Out</a>
+    <div class="headerButtons">
+        <a class="button" onClick="signOut()">Sign Out</a>
+        <a class="button" onClick="openNewEntryForm()">New Entry</a>
+    </div>
 </div>
 
 <div class="container">
@@ -26,6 +30,7 @@
                 <option value="dictDef">Definition</option>
                 <option value="dictTag">Category</option>
                 <option value="all">All</option>
+            </optgroup>
         </select>
     </div>
     <div id="adminDictionaryContainer"></div>
@@ -33,6 +38,36 @@
         <div id="loading-indicator">Loading...</div>
     </div>
 </div>
+
+<!--<div class="entryForm">-->
+<!--    <span class="closeButton buttonIcon" onClick="closeEntryForm()">×</span>-->
+<!--    <form id="entryForm" onsubmit="">-->
+<!--        <label for="inputDictName">Name: </label>-->
+<!--        <input type="text" id="inputDictName" required>-->
+<!--        <label for="inputDictDef">Definition: </label>-->
+<!--        <textarea id="inputDictDef" required></textarea>-->
+<!--        <span class="entryFormNotice">To embed links to another entry, use {{Entry Name}} or {{Display Text}}(Entry Name)</span>-->
+<!--        <label for="inputDictTag">Category: </label>-->
+<!--        <select id="inputDictTag" required>-->
+<!--            <option value="" disabled selected hidden>Category</option>-->
+<!--            <option value="RA Diagram">RA Diagram</option>-->
+<!--            <option value="Fundamentals">Fundamentals</option>-->
+<!--            <option value="Gaps & Alignment">Gaps & Alignment</option>-->
+<!--            <option value="Meter System">Meter System</option>-->
+<!--            <option value="Flats & Exits">Flats & Exits</option>-->
+<!--            <option value="Circle Moves">Circle Moves</option>-->
+<!--            <option value="Follow Moves">Follow Moves</option>-->
+<!--            <option value="Beginner">Beginner</option>-->
+<!--            <option value="Intermediate">Intermediate</option>-->
+<!--            <option value="Advanced">Advanced</option>-->
+<!--            <option value="Elite">Elite</option>-->
+<!--            <option value="Community Moves">Community Moves</option>-->
+<!--        </select>-->
+<!--        <label for="inputDictImg">GIF/Image URL (optional): </label>-->
+<!--        <input type="text" id="inputDictImg">-->
+<!--        <button class="button" type="submit">Add Entry</button>-->
+<!--    </form>-->
+<!--</div>-->
 
 <script>
 </script>

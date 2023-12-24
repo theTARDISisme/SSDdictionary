@@ -1,6 +1,6 @@
-
 const db = firebase.firestore();
 
+const tagOrder = ['RA Diagram', 'Fundamentals', 'Gaps & Alignment', 'Meter System', 'Flats & Exits', 'Circle Moves', 'Follow Moves', 'Beginner', 'Intermediate', 'Advanced', 'Elite', 'Community Moves'];
 
 // Function to fetch data from Firestore with extended search functionality
 async function fetchData(searchTerm, searchCategory) {
@@ -24,47 +24,28 @@ async function fetchData(searchTerm, searchCategory) {
         const filteredDocs = [];
         const searchTermLower = searchTerm.toLowerCase();
 
-        const tagOrder = [
-            'RA Diagram',
-            'Fundamentals',
-            'Gaps & Alignment',
-            'Meter System',
-            'Flats & Exits',
-            'Circle Moves',
-            'Follow Moves',
-            'Beginner',
-            'Intermediate',
-            'Advanced',
-            'Elite',
-            'Community Moves'
-        ];
-
         // Filter and sort documents based on the search category and term
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             switch (searchCategory) {
                 case 'dictName':
                     if (data.dictName && data.dictName.toLowerCase().includes(searchTermLower)) {
-                        filteredDocs.push({ ...data, docId: doc.id });
+                        filteredDocs.push({...data, docId: doc.id});
                     }
                     break;
                 case 'dictDef':
                     if (data.dictDef && data.dictDef.toLowerCase().includes(searchTermLower)) {
-                        filteredDocs.push({ ...data, docId: doc.id });
+                        filteredDocs.push({...data, docId: doc.id});
                     }
                     break;
                 case 'dictTag':
                     if (data.dictTag && data.dictTag.toLowerCase().includes(searchTermLower)) {
-                        filteredDocs.push({ ...data, docId: doc.id });
+                        filteredDocs.push({...data, docId: doc.id});
                     }
                     break;
                 case 'all':
-                    if (
-                        (data.dictName && data.dictName.toLowerCase().includes(searchTermLower)) ||
-                        (data.dictTag && data.dictTag.toLowerCase().includes(searchTermLower)) ||
-                        (data.dictDef && data.dictDef.toLowerCase().includes(searchTermLower))
-                    ) {
-                        filteredDocs.push({ ...data, docId: doc.id });
+                    if ((data.dictName && data.dictName.toLowerCase().includes(searchTermLower)) || (data.dictTag && data.dictTag.toLowerCase().includes(searchTermLower)) || (data.dictDef && data.dictDef.toLowerCase().includes(searchTermLower))) {
+                        filteredDocs.push({...data, docId: doc.id});
                     }
                     break;
                 default:
@@ -91,6 +72,14 @@ async function fetchData(searchTerm, searchCategory) {
     }
 }
 
+async function refreshSearch() {
+    // Get values from the search box and dropdown
+    const searchTerm = document.querySelector('.searchBar').value.trim();
+    const searchCategory = document.querySelector('.searchCategory').value.trim();
+
+    // Refresh the displayed entries based on the search
+    fetchData(searchTerm, searchCategory);
+}
 
 
 window.onload = function () {
@@ -163,7 +152,7 @@ function createDictionaryEntry(data) {
             <p class="dictName">${data.dictName}</p>
             <p class="dictSpacer">-</p>
             <p class="dictDef">${parsedDictDef}</p>
-            ${data.dictImg ? '<div class="dropdownIcon" onclick="toggleDropdown(this)">▼</div>' : ''}
+            ${data.dictImg ? '<div class="dropdownIcon  buttonIcon" onclick="toggleDropdown(this)">▼</div>' : ''}
         </div>
         <img class="dictImg" src="${data.dictImg}">
     `;
@@ -174,31 +163,24 @@ function createAdminButtons(docId, dictIndex) {
     return `
         <p class="dictIndex">${dictIndex}</p>
         <div class="adminButtons">
-            <p class="upButton" onclick="moveEntryUp('${docId}')">↑</p>
-            <p class="downButton" onclick="moveEntryDown('${docId}')">↓</p>
-            <p class="deleteButton" onclick="deleteEntry(this)">×</p>
-            <p class="editButton" onclick="editEntry(this)">✎</p>
+            <span class="upButton buttonIcon" onclick="moveEntryUp('${docId}')">↑</span>
+            <span class="downButton buttonIcon" onclick="moveEntryDown('${docId}')">↓</span>
+            <span class="deleteButton buttonIcon" onclick="deleteEntry('${docId}')">×</span>
+            <span class="editButton buttonIcon" onclick="openEditEntryForm('${docId}')">✎</span>
         </div>
     `;
 }
 
 
-
-
 // Function to parse dictDef for references and create dynamic links
 function parseDictDef(dictDef) {
     const regex = /\{\{([^}]+?)\}\}(\(([^)]+?)\))?/g;
-    return dictDef.replace(regex, (match, displayText, group2, searchTerm) => {
-        const linkText = displayText.trim();
-        const linkSearchTerm = (searchTerm || linkText).trim();
+    return dictDef.replace(regex, (match, searchTerm, group2, displayText) => {
+        const linkSearchTerm = searchTerm.trim();
+        const linkText = (displayText || linkSearchTerm).trim();
         return `<span class="dictLink" onclick="handleDictLinkClick('${linkSearchTerm}')">${linkText}</span>`;
     });
 }
-
-
-
-
-
 
 
 // Function to handle click on dynamic links in dictDef
@@ -222,9 +204,7 @@ async function handleDictLinkClick(referencedDictName) {
             return;
         }
 
-        const referencedEntry = Array.from(querySnapshot.docs).find(
-            (doc) => doc.data().dictName.toLowerCase() === searchTerm
-        );
+        const referencedEntry = Array.from(querySnapshot.docs).find((doc) => doc.data().dictName.toLowerCase() === searchTerm);
 
         if (referencedEntry) {
             // Create the referenced entry and append it to the container
