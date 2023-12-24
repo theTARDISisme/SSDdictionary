@@ -46,7 +46,7 @@
 }
 
 .entryForm {
-    position: absolute;
+    position: fixed;
     z-index: 1;
     left: 50%;
     top: 50%;
@@ -83,7 +83,7 @@
     top: 20px;
     position: absolute;
     right: 20px;
-    margin: 0px;
+    margin: 0;
     font-size: 30px;
 }
 
