@@ -126,6 +126,7 @@ input.searchBar {
 
 .dictImg {
     display: none;
+    max-width: 500px;
 }
 
 .dropdownIcon {
