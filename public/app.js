@@ -132,18 +132,31 @@ function toggleDropdown(iconElement) {
 }
 
 // Function to create a dictionary entry with dynamic links
-function createDictionaryEntry(data) {
+function createDictionaryEntry(data, insertAfter = null, fromLink = false) {
     const entry = document.createElement('div');
     entry.classList.add('dictEntry');
 
+    let docId;
+
+    if (data.docId) {
+        docId = data.docId;
+    } else if (insertAfter) {
+        docId = insertAfter;
+    }
+
     // Parse dictDef for references and create dynamic links
-    const parsedDictDef = parseDictDef(data.dictDef);
+    const parsedDictDef = parseDictDef(data.dictDef, docId);
 
     // Check if it's on the admin page and add buttons if true
     const isAdminPage = document.getElementById('adminDictionaryContainer') !== null;
 
-    entry.dataset.docId = data.docId;
+    entry.dataset.docId = docId;
     entry.dataset.dictIndex = data.dictIndex;
+
+    // Add the class "fromLink" if the entry is being created from a clicked link
+    if (fromLink) {
+        entry.classList.add('fromLink');
+    }
 
     entry.innerHTML = `
         <p class="dictTag">${data.dictTag}</p>
@@ -154,10 +167,25 @@ function createDictionaryEntry(data) {
             <p class="dictDef">${parsedDictDef}</p>
             ${data.dictImg ? '<div class="dropdownIcon  buttonIcon" onclick="toggleDropdown(this)">▼</div>' : ''}
         </div>
-        <img class="dictImg" src="${data.dictImg}">
-    `;
+            ${data.dictImg ? `<img class="dictImg" src="${data.dictImg}">` : ''}    `;
+
+    // Insert the entry after the specified position or append it to the end
+    const dictionaryContainer = document.getElementById('dictionary-container');
+    if (insertAfter) {
+        const referenceEntry = document.querySelector(`[data-doc-id="${insertAfter}"]`);
+        if (referenceEntry) {
+            referenceEntry.insertAdjacentElement('afterend', entry);
+        } else {
+            console.warn(`Reference entry with ID ${insertAfter} not found. Appending to the end.`);
+            dictionaryContainer.appendChild(entry);
+        }
+    } else {
+        dictionaryContainer.appendChild(entry);
+    }
+
     return entry;
 }
+
 
 function createAdminButtons(docId, dictIndex) {
     return `
@@ -173,24 +201,27 @@ function createAdminButtons(docId, dictIndex) {
 
 
 // Function to parse dictDef for references and create dynamic links
-function parseDictDef(dictDef) {
+function parseDictDef(dictDef, docId) {
     const regex = /\{\{([^}]+?)\}\}(\(([^)]+?)\))?/g;
     return dictDef.replace(regex, (match, searchTerm, group2, displayText) => {
         const linkSearchTerm = searchTerm.trim();
         const linkText = (displayText || linkSearchTerm).trim();
-        return `<span class="dictLink" onclick="handleDictLinkClick('${linkSearchTerm}')">${linkText}</span>`;
+        return `<span class="dictLink" onclick="handleDictLinkClick('${linkSearchTerm}', '${docId}')">${linkText}</span>`;
     });
 }
 
 
 // Function to handle click on dynamic links in dictDef
-async function handleDictLinkClick(referencedDictName) {
+async function handleDictLinkClick(referencedDictName, docId) {
     const searchTerm = referencedDictName.trim().toLowerCase();
     const searchCategory = 'dictName';
 
     const searchInput = document.querySelector('.searchBar');
     const currentSearchTerm = searchInput.value.trim();
     const currentSearchCategory = document.querySelector('.searchCategory').value;
+
+    console.log('Current search term:', currentSearchTerm);
+    console.log('Current search category:', currentSearchCategory);
 
     // Perform a new search based on the current content of the search bar
     await fetchData(currentSearchTerm, currentSearchCategory);
@@ -207,13 +238,14 @@ async function handleDictLinkClick(referencedDictName) {
         const referencedEntry = Array.from(querySnapshot.docs).find((doc) => doc.data().dictName.toLowerCase() === searchTerm);
 
         if (referencedEntry) {
+            console.log('Referenced entry found:', referencedEntry.data());
+
             // Create the referenced entry and append it to the container
             const referencedData = referencedEntry.data();
-            const referencedEntryElement = createDictionaryEntry(referencedData);
-            document.getElementById('dictionary-container').appendChild(referencedEntryElement);
+            referencedEntry.docId = docId;
 
-            // Scroll to the newly displayed entry
-            referencedEntryElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+            createDictionaryEntry(referencedData, docId, true);
+
         } else {
             console.log('Referenced entry not found.');
         }

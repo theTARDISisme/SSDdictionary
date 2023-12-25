@@ -142,3 +142,7 @@ input.searchBar {
 .buttonIcon:hover {
     color: #bdbdbd;
 }
+
+.fromLink {
+    background-color: #345681;
+}
