@@ -13,13 +13,15 @@ firebase.auth().onAuthStateChanged((user) => {
     }
 });
 
+// Function to move an entry up in Firestore
 async function moveEntryUp(entryId) {
     try {
-        const entryRef = db.collection('dictionary').doc(entryId);
+        const dictionaryCollection = db.collection('dict').doc('dictionary'); // Update with your actual collection name and document ID
 
         // Get the current entry's data
-        const currentEntrySnapshot = await entryRef.get();
-        const currentEntryData = currentEntrySnapshot.data();
+        const documentSnapshot = await dictionaryCollection.get();
+        const dictionaryData = documentSnapshot.data();
+        const currentEntryData = dictionaryData[entryId];
         const currentEntryIndex = currentEntryData.dictIndex;
         const currentEntryTag = currentEntryData.dictTag;
 
@@ -30,25 +32,23 @@ async function moveEntryUp(entryId) {
         }
 
         // Find the lower entry within the same category
-        const lowerEntrySnapshot = await db.collection('dictionary')
-            .where('dictTag', '==', currentEntryTag)
-            .where('dictIndex', '==', currentEntryIndex - 1)
-            .limit(1)
-            .get();
+        const entriesInCategory = Object.entries(dictionaryData || {})
+            .filter(([_, entry]) => entry.dictTag === currentEntryTag);
 
-        // Update the current entry's index
-        await db.runTransaction(async (transaction) => {
-            transaction.update(entryRef, {dictIndex: firebase.firestore.FieldValue.increment(-1)});
-        });
+        const lowerEntry = entriesInCategory.find(([_, entry]) => entry.dictIndex === currentEntryIndex - 1);
 
-        if (!lowerEntrySnapshot.empty) {
-            const lowerEntryRef = lowerEntrySnapshot.docs[0].ref;
+        if (lowerEntry) {
+            // Swap the indices of the current entry and the lower entry
+            const lowerEntryId = lowerEntry[0];
 
-            // Update the lower entry's index
-            await db.runTransaction(async (transaction) => {
-                transaction.update(lowerEntryRef, {dictIndex: firebase.firestore.FieldValue.increment(1)});
-            });
+            const updates = {
+                [`${entryId}.dictIndex`]: currentEntryIndex - 1,
+                [`${lowerEntryId}.dictIndex`]: currentEntryIndex,
+            };
+
+            await dictionaryCollection.update(updates);
         }
+
         // Refresh the displayed entries after moving
         refreshSearch();
 
@@ -57,44 +57,47 @@ async function moveEntryUp(entryId) {
     }
 }
 
+
+
+
+// Function to move an entry down in Firestore
 async function moveEntryDown(entryId) {
     try {
-        const entryRef = db.collection('dictionary').doc(entryId);
+        const dictionaryCollection = db.collection('dict').doc('dictionary'); // Update with your actual collection name and document ID
 
         // Get the current entry's data
-        const currentEntrySnapshot = await entryRef.get();
-        const currentEntryData = currentEntrySnapshot.data();
+        const documentSnapshot = await dictionaryCollection.get();
+        const dictionaryData = documentSnapshot.data();
+        const currentEntryData = dictionaryData[entryId];
         const currentEntryIndex = currentEntryData.dictIndex;
         const currentEntryTag = currentEntryData.dictTag;
 
         // Find the higher entry within the same category
-        const higherEntrySnapshot = await db.collection('dictionary')
-            .where('dictTag', '==', currentEntryTag)
-            .where('dictIndex', '==', currentEntryIndex + 1)
-            .limit(1)
-            .get();
+        const entriesInCategory = Object.entries(dictionaryData || {})
+            .filter(([_, entry]) => entry.dictTag === currentEntryTag);
 
-        // Update the current entry's index
-        await db.runTransaction(async (transaction) => {
-            transaction.update(entryRef, {dictIndex: firebase.firestore.FieldValue.increment(1)});
-        });
+        const higherEntry = entriesInCategory.find(([_, entry]) => entry.dictIndex === currentEntryIndex + 1);
 
-        if (!higherEntrySnapshot.empty) {
-            const higherEntryRef = higherEntrySnapshot.docs[0].ref;
+        if (higherEntry) {
+            // Swap the indices of the current entry and the higher entry
+            const higherEntryId = higherEntry[0];
 
-            // Update the higher entry's index
-            await db.runTransaction(async (transaction) => {
-                transaction.update(higherEntryRef, {dictIndex: firebase.firestore.FieldValue.increment(-1)});
-            });
+            const updates = {
+                [`${entryId}.dictIndex`]: currentEntryIndex + 1,
+                [`${higherEntryId}.dictIndex`]: currentEntryIndex,
+            };
+
+            await dictionaryCollection.update(updates);
         }
 
-        console.log('Entry moved down successfully.');
-        // Refresh the displayed entries after the move
+        // Refresh the displayed entries after moving
         refreshSearch();
+
     } catch (error) {
         console.error('Error moving entry down:', error);
     }
 }
+
 
 // Function to dynamically generate the entry form
 function generateNewEntryForm() {
@@ -160,54 +163,49 @@ async function addEntry() {
     const inputDictTag = document.getElementById('inputDictTag').value.trim();
     const inputDictImg = document.getElementById('inputDictImg').value.trim();
 
-    // Generate Firestore document ID
-    let entryId = generateFirestoreId(inputDictName);
-
     // Reference to the Firestore collection
-    const dictionaryCollection = db.collection('dictionary');
+    const dictionaryCollection = db.collection('dict').doc('dictionary'); // Update with your actual collection name and document ID
 
     try {
-        // Check if the entry with the same ID already exists
-        let entrySnapshot = await dictionaryCollection.doc(entryId).get();
+        // Generate a unique entryId
+        const entryId = generateFirestoreId(inputDictName);
 
-        // Regenerate ID if entry already exists
-        while (entrySnapshot.exists) {
-            entryId = generateFirestoreId(inputDictName);
-            entrySnapshot = await dictionaryCollection.doc(entryId).get();
-        }
+        // Get the current data from Firestore
+        const dictionaryData = (await dictionaryCollection.get()).data();
 
         // Query Firestore to find the max dictIndex for the current category (dictTag)
-        const maxIndexSnapshot = await dictionaryCollection
-            .where('dictTag', '==', inputDictTag)
-            .orderBy('dictIndex', 'desc')
-            .limit(1)
-            .get();
+        const entriesInCategory = Object.entries(dictionaryData || {})
+            .filter(([_, entry]) => entry.dictTag === inputDictTag);
 
         let newIndex = 0;
-        if (!maxIndexSnapshot.empty) {
+        if (entriesInCategory.length > 0) {
             // If there are existing entries in the category, set newIndex to the next available index
-            const maxIndexEntry = maxIndexSnapshot.docs[0].data();
-            newIndex = maxIndexEntry.dictIndex + 1;
+            newIndex = Math.max(...entriesInCategory.map(([_, entry]) => entry.dictIndex)) + 1;
         }
 
         // Create a new entry in Firestore with the calculated dictIndex
-        await dictionaryCollection.doc(entryId).set({
-            dictName: inputDictName,
-            dictDef: inputDictDef,
-            dictTag: inputDictTag,
-            dictImg: inputDictImg,
-            dictIndex: newIndex
+        await dictionaryCollection.update({
+            [entryId]: {
+                dictName: inputDictName,
+                dictDef: inputDictDef,
+                dictTag: inputDictTag,
+                dictImg: inputDictImg,
+                dictIndex: newIndex
+            }
         });
 
         // Close the entry form
         closeEntryForm();
 
+        // Refresh the displayed entries after adding
         refreshSearch();
-
     } catch (error) {
         console.error('Error adding entry to Firestore:', error);
     }
 }
+
+
+
 
 // Function to generate a valid Firestore document ID from inputDictName
 function generateFirestoreId(inputDictName) {
@@ -224,11 +222,13 @@ function generateFirestoreId(inputDictName) {
 // Function to delete an entry from Firestore
 async function deleteEntry(entryId) {
     // Reference to the Firestore collection
-    const dictionaryCollection = db.collection('dictionary');
+    const dictionaryCollection = db.collection('dict').doc('dictionary'); // Update with your actual collection name and document ID
 
     try {
         // Delete the entry with the specified ID
-        await dictionaryCollection.doc(entryId).delete();
+        await dictionaryCollection.update({
+            [entryId]: firebase.firestore.FieldValue.delete(),
+        });
 
         // Optionally, you can update the UI to remove the deleted entry
         const entryElement = document.getElementById(entryId);
@@ -241,6 +241,7 @@ async function deleteEntry(entryId) {
         console.error('Error deleting entry from Firestore:', error);
     }
 }
+
 
 // Function to generate the edit entry form dynamically
 function generateEditEntryForm(entryId) {
@@ -291,7 +292,7 @@ function openEditEntryForm(entryId) {
     }
 
     // Reference to the Firestore collection
-    const dictionaryCollection = db.collection('dictionary');
+    const dictionaryCollection = db.collection('dict').doc('dictionary');
 
     // Reference to the form fields
     const inputDictName = document.getElementById('inputEditDictName');
@@ -299,18 +300,22 @@ function openEditEntryForm(entryId) {
     const inputDictTag = document.getElementById('inputEditDictTag');
     const inputDictImg = document.getElementById('inputEditDictImg');
 
-    // Get the existing entry data
-    dictionaryCollection.doc(entryId).get()
-        .then((doc) => {
-            if (doc.exists) {
-                const data = doc.data();
-                // Prefill the form fields with existing data
-                inputDictName.value = data.dictName;
-                inputDictDef.value = data.dictDef;
-                inputDictTag.value = data.dictTag;
-                inputDictImg.value = data.dictImg || '';
+    // Get the 'dictionary' document
+    dictionaryCollection.get()
+        .then((documentSnapshot) => {
+            if (documentSnapshot.exists) {
+                const data = documentSnapshot.data();
+                if (data && data[entryId]) {
+                    // Prefill the form fields with existing data
+                    inputDictName.value = data[entryId].dictName;
+                    inputDictDef.value = data[entryId].dictDef;
+                    inputDictTag.value = data[entryId].dictTag;
+                    inputDictImg.value = data[entryId].dictImg || '';
+                } else {
+                    console.error('Entry not found:', entryId);
+                }
             } else {
-                console.error('Entry not found:', entryId);
+                console.error('Dictionary document not found.');
             }
         })
         .catch((error) => {
@@ -318,10 +323,11 @@ function openEditEntryForm(entryId) {
         });
 }
 
+
 // Function to update an entry in Firestore
 async function updateEntry(entryId) {
     // Reference to the Firestore collection
-    const dictionaryCollection = db.collection('dictionary');
+    const dictionaryCollection = db.collection('dict').doc('dictionary');
 
     // Reference to the form fields
     const inputDictName = document.getElementById('inputEditDictName');
@@ -330,23 +336,39 @@ async function updateEntry(entryId) {
     const inputDictImg = document.getElementById('inputEditDictImg');
 
     try {
+        // Get the 'dictionary' document
+        const documentSnapshot = await dictionaryCollection.get();
+
+        if (!documentSnapshot.exists) {
+            console.log('Dictionary document not found.');
+            return;
+        }
+
+        const data = documentSnapshot.data();
+
         // Update the entry with the specified ID
-        await dictionaryCollection.doc(entryId).update({
-            dictName: inputDictName.value,
-            dictDef: inputDictDef.value,
-            dictTag: inputDictTag.value,
-            dictImg: inputDictImg.value || null, // Use null if inputDictImg is empty
-        });
+        if (data && data[entryId]) {
+            data[entryId].dictName = inputDictName.value;
+            data[entryId].dictDef = inputDictDef.value;
+            data[entryId].dictTag = inputDictTag.value;
+            data[entryId].dictImg = inputDictImg.value || null;
 
-        // Close the edit entry form
-        closeEntryForm();
+            // Ensure dictIndex remains unchanged
+            const oldEntry = data[entryId];
+            data[entryId].dictIndex = oldEntry.dictIndex;
 
-        // Refresh the displayed entries after updating
-        refreshSearch();
+            // Update the 'dictionary' document with the modified data
+            await dictionaryCollection.set(data);
+
+            // Close the edit entry form
+            closeEntryForm();
+
+            // Refresh the displayed entries after updating
+            refreshSearch();
+        } else {
+            console.log(`Entry with ID ${entryId} not found in the dictionary.`);
+        }
     } catch (error) {
         console.error('Error updating entry in Firestore:', error);
     }
 }
-
-
-

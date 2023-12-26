@@ -1,6 +1,3 @@
-
-const auth = firebase.auth();
-
 // Sign In
 function signIn(email, password) {
     auth.signInWithEmailAndPassword(email, password)
