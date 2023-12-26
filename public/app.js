@@ -28,21 +28,21 @@ async function fetchInitialData() {
         dictionaryContainer.innerHTML = '';
 
         // Sort and display all entries initially
-        loadLocalData();
+        await loadLocalData();
     } catch (error) {
         console.error('Error fetching documents:', error);
     }
 }
 
 // Function to load local data with extended search functionality
-function loadLocalData(searchTerm, searchCategory) {
+async function loadLocalData(searchTerm, searchCategory) {
     const dictionaryContainer = document.getElementById('dictionary-container');
 
     // Clear existing entries
     dictionaryContainer.innerHTML = '';
 
     // Filter and sort documents based on the search category and term
-    const filteredDocs = localData.filter(([entryData]) => {
+    const filteredDocs = localData.filter(([entryId, entryData]) => {
         switch (searchCategory) {
             case 'dictName':
                 return entryData.dictName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -76,6 +76,7 @@ function loadLocalData(searchTerm, searchCategory) {
         const entry = createDictionaryEntry({ ...data, entryId });
         dictionaryContainer.appendChild(entry);
     });
+    return localData;
 }
 
 
@@ -87,7 +88,7 @@ async function refreshSearch() {
 
     // Refresh the displayed entries based on the search
     await fetchInitialData();
-    loadLocalData(searchTerm, searchCategory);
+    await loadLocalData(searchTerm, searchCategory);
 }
 
 
@@ -215,29 +216,24 @@ async function handleDictLinkClick(referencedDictName, docId) {
     await loadLocalData(currentSearchTerm, currentSearchCategory);
 
     try {
-        // Get all documents from the collection
-        const querySnapshot = await db.collection('dictionary').get();
-
-        if (querySnapshot.empty) {
-            console.log('No documents found.');
-            return;
-        }
-
-        const referencedEntry = Array.from(querySnapshot.docs).find((doc) => doc.data().dictName.toLowerCase() === searchTerm);
+        const referencedEntry = localData.find(([entryId, entryData]) => entryData.dictName.toLowerCase() === searchTerm);
 
         if (referencedEntry) {
-            console.log('Referenced entry found:', referencedEntry.data());
+            console.log('Referenced entry found:', referencedEntry);
 
             // Create the referenced entry and append it to the container
-            const referencedData = referencedEntry.data();
-            referencedEntry.docId = docId;
+            const [entryId, entryData] = referencedEntry;
+            entryData.docId = docId;
 
-            createDictionaryEntry(referencedData, docId, true);
-
+            createDictionaryEntry(entryData, docId, true);
         } else {
             console.log('Referenced entry not found.');
         }
     } catch (error) {
-        console.error('Error fetching documents:', error);
+        console.error('Error handling dict link click:', error);
     }
 }
+
+
+
+
