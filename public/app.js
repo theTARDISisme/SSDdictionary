@@ -219,8 +219,6 @@ async function handleDictLinkClick(referencedDictName, docId) {
         const referencedEntry = localData.find(([entryId, entryData]) => entryData.dictName.toLowerCase() === searchTerm);
 
         if (referencedEntry) {
-            console.log('Referenced entry found:', referencedEntry);
-
             // Create the referenced entry and append it to the container
             const [entryId, entryData] = referencedEntry;
             entryData.docId = docId;
