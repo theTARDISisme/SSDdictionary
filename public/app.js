@@ -233,5 +233,36 @@ async function handleDictLinkClick(referencedDictName, docId) {
 }
 
 
+//Back to top button and sticky search bar
+document.addEventListener('DOMContentLoaded', function() {
+    var backToTopBtn = document.getElementById("backToTopBtn");
+
+    window.onscroll = function() {
+        if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+            backToTopBtn.style.display = "block";
+        } else {
+            backToTopBtn.style.display = "none";
+        }
+
+        var searchContainer = document.getElementById('search-container');
+        var header = document.querySelector('.header'); // Change this line
+        var searchBar = document.getElementById('search-bar');
+
+        var scrollPosition = window.scrollY;
+
+        if (scrollPosition > header.offsetHeight) {
+            searchContainer.classList.add('sticky');
+        } else {
+            searchContainer.classList.remove('sticky');
+        }
+    };
+
+    backToTopBtn.onclick = function() {
+        // For modern browsers
+        document.body.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // For Safari
+        document.documentElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+});
 
 

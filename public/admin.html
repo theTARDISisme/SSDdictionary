@@ -21,9 +21,9 @@
     </div>
 </div>
 
-<div class="container">
-    <div class="searchArea">
-        <input type="text" class="searchBar" placeholder="Search dictionary">
+<div id="search-container">
+    <div class="searchArea container">
+        <input type="text" class="searchBar" id="search-bar" placeholder="Search dictionary">
         <select class="searchCategory">
             <optgroup label = "Search By">
                 <option value="all">All</option>
@@ -33,41 +33,16 @@
             </optgroup>
         </select>
     </div>
+</div>
+
+<div class="container">
     <div id="adminDictionaryContainer"></div>
     <div class="results" id="dictionary-container">
         <div id="loading-indicator">Loading...</div>
     </div>
 </div>
 
-<!--<div class="entryForm">-->
-<!--    <span class="closeButton buttonIcon" onClick="closeEntryForm()">×</span>-->
-<!--    <form id="entryForm" onsubmit="">-->
-<!--        <label for="inputDictName">Name: </label>-->
-<!--        <input type="text" id="inputDictName" required>-->
-<!--        <label for="inputDictDef">Definition: </label>-->
-<!--        <textarea id="inputDictDef" required></textarea>-->
-<!--        <span class="entryFormNotice">To embed links to another entry, use {{Entry Name}} or {{Display Text}}(Entry Name)</span>-->
-<!--        <label for="inputDictTag">Category: </label>-->
-<!--        <select id="inputDictTag" required>-->
-<!--            <option value="" disabled selected hidden>Category</option>-->
-<!--            <option value="RA Diagram">RA Diagram</option>-->
-<!--            <option value="Fundamentals">Fundamentals</option>-->
-<!--            <option value="Gaps & Alignment">Gaps & Alignment</option>-->
-<!--            <option value="Meter System">Meter System</option>-->
-<!--            <option value="Flats & Exits">Flats & Exits</option>-->
-<!--            <option value="Circle Moves">Circle Moves</option>-->
-<!--            <option value="Follow Moves">Follow Moves</option>-->
-<!--            <option value="Beginner">Beginner</option>-->
-<!--            <option value="Intermediate">Intermediate</option>-->
-<!--            <option value="Advanced">Advanced</option>-->
-<!--            <option value="Elite">Elite</option>-->
-<!--            <option value="Community Moves">Community Moves</option>-->
-<!--        </select>-->
-<!--        <label for="inputDictImg">GIF/Image URL (optional): </label>-->
-<!--        <input type="text" id="inputDictImg">-->
-<!--        <button class="button" type="submit">Add Entry</button>-->
-<!--    </form>-->
-<!--</div>-->
+<button class="button" id="backToTopBtn" title="Go to top">&#9650;</button>
 
 <script>
 </script>

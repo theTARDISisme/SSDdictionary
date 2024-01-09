@@ -14,9 +14,9 @@
     <h1>Star Stable Dressage Dictionary</h1>
 </div>
 
-<div class="container">
-    <div class="searchArea">
-        <input type="text" class="searchBar" placeholder="Search dictionary">
+<div id="search-container">
+    <div class="searchArea container">
+        <input type="text" class="searchBar" id="search-bar" placeholder="Search dictionary">
         <select class="searchCategory">
             <optgroup label = "Search By">
                 <option value="all">All</option>
@@ -26,31 +26,16 @@
             </optgroup>
         </select>
     </div>
+</div>
+
+<div class="container">
+
     <div class="results" id="dictionary-container">
         <div id="loading-indicator">Loading...</div>
-
-<!--        <div class="dictEntry" id="dict1" onclick="toggleImg(this)">-->
-<!--            <p class="dictTag">Fundamentals</p>-->
-<!--            <div class="dictText">-->
-<!--                <p class="dictName">Curl</p>-->
-<!--                <p class="dictSpacer">-</p>-->
-<!--                <p class="dictDef">On go, hold your arrow key in the gait (speed) you are currently in to complete a full circle.</p>-->
-<!--            </div>-->
-<!--                <img class="dictImg" src="https://www.reactiongifs.com/r/2012/06/homer_lurking.gif">-->
-<!--        </div>-->
-<!--        <div class="dictEntry" id="dict2" onclick="toggleImg(this)">-->
-<!--            <p class="dictTag">Beginner</p>-->
-<!--            <div class="dictText">-->
-<!--                <p class="dictName">Fate Curl</p>-->
-<!--                <p class="dictSpacer">-</p>-->
-<!--                <p class="dictDef"><span class="dictLink" onclick="">Curl</span> in the direction called, then <span class="dictLink" onclick="">curl</span> in the opposite direction.</p>-->
-<!--            </div>-->
-<!--                <img class="dictImg" src="https://www.reactiongifs.com/r/2012/06/homer_lurking.gif">-->
-<!--        </div>-->
     </div>
 </div>
 
-<script>
-</script>
+<button class="button" id="backToTopBtn" title="Go to top">&#9650;</button>
+
 </body>
 </html>

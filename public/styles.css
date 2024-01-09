@@ -58,6 +58,7 @@ body {
 
 .searchArea {
     display: flex;
+    width: 100%;
 }
 
 input.searchBar {
@@ -147,4 +148,38 @@ input.searchBar {
 
 .fromLink {
     background-color: #345681;
+}
+
+.sticky {
+    position: fixed;
+    top: 0;
+    left: 0;
+    animation: fadeInDown 0.5s;
+    z-index: 1;
+}
+
+#search-container {
+    width: 100%;
+    background-color: white;
+    display: flex;
+    justify-content: center;
+}
+
+#backToTopBtn {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    min-width: initial;
+    box-shadow: 0px 0px 12px 5px #00000075;
+}
+
+#backToTopBtn:hover {
+    box-shadow: 0px 0px 12px 5px #00000075, inset 0 0 20px 0 #00000075;
+}
+
+#backToTopBtn.show {
+    display: block;
 }
