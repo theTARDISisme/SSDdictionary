@@ -23,6 +23,7 @@
 
 .header {
     justify-content: space-between;
+    text-align:unset;
 }
 
 .headerButtons {
