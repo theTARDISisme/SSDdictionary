@@ -15,3 +15,4 @@ console.log(firebase);
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
+const analytics = firebase.analytics();
