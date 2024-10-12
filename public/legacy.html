@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <!-- Primary Meta Tags -->
+    <title>Star Stable Dressage Dictionary</title>
+    <meta name="title" content="Star Stable Dressage Dictionary">
+    <meta name="description" content="The Unofficial, Searchable Dictionary Database, Provided By Snowflake Woods">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ssddictionary.web.app">
+    <meta property="og:title" content="Star Stable Dressage Dictionary">
+    <meta property="og:description" content="The Unofficial, Searchable Dictionary Database, Provided By Snowflake Woods">
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://ssddictionary.web.app">
+    <meta property="twitter:title" content="Star Stable Dressage Dictionary">
+    <meta property="twitter:description" content="The Unofficial, Searchable Dictionary Database, Provided By Snowflake Woods">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="legacy-styles.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="legacy-app.js"></script>
+</head>
+<body>
+<div class="header">
+    <div>
+    <h1>Star Stable Dressage Dictionary</h1>
+    <p>The Unofficial, Searchable SSD Dictionary Database, Provided By <a href="https://discord.gg/xqjqFmMQbp" target="_blank">Snowflake Woods</a></p>
+    </div>
+</div>
+
+<div id="search-container">
+    <div class="searchArea container">
+        <input type="text" class="searchBar" id="search-bar" placeholder="Search dictionary">
+        <select class="searchCategory">
+            <optgroup label = "Search By">
+                <option value="all">All</option>
+                <option value="dictName">Move Name</option>
+                <option value="dictDef">Definition</option>
+                <option value="dictTag">Category</option>
+            </optgroup>
+        </select>
+    </div>
+</div>
+
+<div class="container">
+
+    <div class="results" id="dictionary-container">
+        <div id="loading-indicator">Loading...</div>
+    </div>
+</div>
+
+<button class="button" id="backToTopBtn" title="Go to top">&#9650;</button>
+
+</body>
+</html>
