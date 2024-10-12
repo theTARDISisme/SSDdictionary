@@ -156,7 +156,7 @@ function createDictionaryEntry(data, insertAfter = null, fromLink = false) {
     entry.setAttribute('data-doc-id', docId);
     entry.innerHTML = `
         <p class="dictTag">${data.dictTag}
-        ${fromLink ? `<span class="closeButton buttonIcon" onclick="closeEntry(this)">×</span>` : ''}</p>
+        ${fromLink ? `<span class="closeEntryButton buttonIcon" onclick="closeEntry(this)">×</span>` : ''}</p>
         
         <div class="dictText">
             ${isAdminPage ? createAdminButtons(data.entryId, data.dictIndex) : ''}
@@ -201,9 +201,9 @@ function createAdminButtons(docId, dictIndex) {
 }
 
 // Function to close entry (used for the fromLink entries)
-function closeEntry(closeButton) {
+function closeEntry(closeEntryButton) {
     // Find the closest dictionary entry container and remove it
-    const entry = closeButton.closest('.dictEntry');
+    const entry = closeEntryButton.closest('.dictEntry');
     if (entry) {
         entry.remove();
     } else {
@@ -248,9 +248,9 @@ async function handleDictLinkClick(referencedDictName, docId, linkElement) {
 
             if (existingEntry) {
                 // If the entry is already open, close it first
-                const closeButton = existingEntry.querySelector('.closeButton');
-                if (closeButton) {
-                    closeEntry(closeButton); // Close the existing open entry
+                const closeEntryButton = existingEntry.querySelector('.closeEntryButton');
+                if (closeEntryButton) {
+                    closeEntry(closeEntryButton); // Close the existing open entry
                 }
             }
 
