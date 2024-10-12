@@ -138,9 +138,7 @@ function createDictionaryEntry(data, insertAfter = null, fromLink = false) {
     // } else if (insertAfter) {
     //     docId = insertAfter;
     // }
-    if (fromLink) {
-        console.log(data);
-    }
+
     docId = data.entryId;
 
     // Parse dictDef for references and create dynamic links
@@ -247,14 +245,11 @@ async function handleDictLinkClick(referencedDictName, docId, linkElement) {
 
             // Find any open 'fromLink' entry with the same docId
             const existingEntry = document.querySelector(`.dictEntry.fromLink[data-doc-id="${entryId}"]`);
-            console.log("searching for duplicate entry " + entryId);
 
             if (existingEntry) {
                 // If the entry is already open, close it first
-                console.log("existing entry found, closing");
                 const closeButton = existingEntry.querySelector('.closeButton');
                 if (closeButton) {
-                    console.log("found closeButton");
                     closeEntry(closeButton); // Close the existing open entry
                 }
             }
