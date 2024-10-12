@@ -133,11 +133,15 @@ function createDictionaryEntry(data, insertAfter = null, fromLink = false) {
 
     let docId;
 
-    if (data.entryId) {
-        docId = data.entryId;
-    } else if (insertAfter) {
-        docId = insertAfter;
+    // if (data.entryId) {
+    //     docId = data.entryId;
+    // } else if (insertAfter) {
+    //     docId = insertAfter;
+    // }
+    if (fromLink) {
+        console.log(data);
     }
+    docId = data.entryId;
 
     // Parse dictDef for references and create dynamic links
     const parsedDictDef = parseDictDef(data.dictDef, docId);
@@ -151,9 +155,11 @@ function createDictionaryEntry(data, insertAfter = null, fromLink = false) {
     if (fromLink) {
         entry.classList.add('fromLink');
     }
-
+    entry.setAttribute('data-doc-id', docId);
     entry.innerHTML = `
-        <p class="dictTag">${data.dictTag}</p>
+        <p class="dictTag">${data.dictTag}
+        ${fromLink ? `<span class="closeButton buttonIcon" onclick="closeEntry(this)">×</span>` : ''}</p>
+        
         <div class="dictText">
             ${isAdminPage ? createAdminButtons(data.entryId, data.dictIndex) : ''}
             <p class="dictName">${data.dictName}</p>
@@ -163,10 +169,13 @@ function createDictionaryEntry(data, insertAfter = null, fromLink = false) {
         </div>
             ${data.dictImg ? `<img class="dictImg" src="${data.dictImg}">` : ''}    `;
 
+
+
+
     // Insert the entry after the specified position or append it to the end
     const dictionaryContainer = document.getElementById('dictionary-container');
     if (insertAfter) {
-        const referenceEntry = document.querySelector(`[data-doc-id="${insertAfter}"]`);
+        const referenceEntry = document.querySelector(`[data-rand-id="${insertAfter}"]`);
         if (referenceEntry) {
             referenceEntry.insertAdjacentElement('afterend', entry);
         } else {
@@ -193,6 +202,16 @@ function createAdminButtons(docId, dictIndex) {
     `;
 }
 
+// Function to close entry (used for the fromLink entries)
+function closeEntry(closeButton) {
+    // Find the closest dictionary entry container and remove it
+    const entry = closeButton.closest('.dictEntry');
+    if (entry) {
+        entry.remove();
+    } else {
+        console.error('Entry container not found.');
+    }
+}
 
 // Function to parse dictDef for references and create dynamic links
 function parseDictDef(dictDef, docId) {
@@ -200,20 +219,22 @@ function parseDictDef(dictDef, docId) {
     return dictDef.replace(regex, (match, searchTerm, group2, displayText) => {
         const linkSearchTerm = searchTerm.trim();
         const linkText = (displayText || linkSearchTerm).trim();
-        return `<span class="dictLink" onclick="handleDictLinkClick('${linkSearchTerm}', '${docId}')">${linkText}</span>`;
+        return `<span class="dictLink" onclick="handleDictLinkClick('${linkSearchTerm}', '${docId}', this)">${linkText}</span>`;
     });
 }
 
 
 // Function to handle click on dynamic links in dictDef
-async function handleDictLinkClick(referencedDictName, docId) {
+async function handleDictLinkClick(referencedDictName, docId, linkElement) {
     const searchTerm = referencedDictName.trim().toLowerCase();
     const searchInput = document.querySelector('.searchBar');
     const currentSearchTerm = searchInput.value.trim();
     const currentSearchCategory = document.querySelector('.searchCategory').value;
 
+
+
     // Perform a new search based on the current content of the search bar
-    await loadLocalData(currentSearchTerm, currentSearchCategory);
+    // await loadLocalData(currentSearchTerm, currentSearchCategory);
 
     try {
         const referencedEntry = localData.find(([entryId, entryData]) => entryData.dictName.toLowerCase() === searchTerm);
@@ -222,14 +243,44 @@ async function handleDictLinkClick(referencedDictName, docId) {
             // Create the referenced entry and append it to the container
             const [entryId, entryData] = referencedEntry;
             entryData.docId = docId;
+            entryData.entryId = entryId;  // Ensure entryId is set from the referenced entry
 
-            createDictionaryEntry(entryData, docId, true);
+            // Find any open 'fromLink' entry with the same docId
+            const existingEntry = document.querySelector(`.dictEntry.fromLink[data-doc-id="${entryId}"]`);
+            console.log("searching for duplicate entry " + entryId);
+
+            if (existingEntry) {
+                // If the entry is already open, close it first
+                console.log("existing entry found, closing");
+                const closeButton = existingEntry.querySelector('.closeButton');
+                if (closeButton) {
+                    console.log("found closeButton");
+                    closeEntry(closeButton); // Close the existing open entry
+                }
+            }
+
+            // Generate a new randId for the new entry
+            const randId = generateRandId();
+
+            // Select the parent div containing the clicked link
+            const parentDiv = linkElement.closest('.dictEntry');
+            if (parentDiv) {
+                parentDiv.setAttribute('data-rand-id', randId); // Set the randId as an attribute on the parent div
+            }
+
+            createDictionaryEntry(entryData, randId, true);
         } else {
             console.log('Referenced entry not found.');
         }
+
+
+
     } catch (error) {
         console.error('Error handling dict link click:', error);
     }
+
+
+
 }
 
 
@@ -263,6 +314,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // For Safari
         document.documentElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
+
+
 });
 
-
+function generateRandId() {
+    return Date.now() + '_' + Math.floor(Math.random() * 1000);
+}
