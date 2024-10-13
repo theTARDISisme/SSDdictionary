@@ -227,8 +227,8 @@ async function addEntry() {
                 dictName: inputDictName,
                 dictDef: inputDictDef,
                 dictTag: inputDictTag,
-                dictImg: mediaUrl,
-                dictImg2: mediaUrl2,
+                dictImg: mediaUrl || null,
+                dictImg2: mediaUrl2 || null,
                 dictIndex: newIndex
             }
         });

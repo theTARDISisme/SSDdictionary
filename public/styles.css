@@ -141,8 +141,16 @@ input.searchBar {
     max-width: fit-content;
 }
 
+.dictVideo {
+    height: 400px;
+}
+
 .dictMedia {
     display:none;
+}
+
+.mediaPlaceholder {
+    display: inline-block;
 }
 
 .dropdownIcon {
