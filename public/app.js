@@ -129,9 +129,34 @@ window.onload = function () {
 }
 
 // Function to toggle dropdown visibility
-function toggleDropdown(iconElement) {
+async function toggleDropdown(iconElement) {
     const entry = iconElement.closest('.dictEntry');
     const media = entry.querySelector('.dictMedia');
+    const mediaPlaceholder = media.querySelector('.mediaPlaceholder:first-child');
+    const mediaPlaceholder2 = media.querySelector('.mediaPlaceholder:last-child');
+
+    // Check if media is loaded by looking at a data attribute
+    if (!media.dataset.loaded) {
+        const dictImg = mediaPlaceholder.getAttribute('data-dict-img');
+        console.log(mediaPlaceholder.getAttribute('data-dict-img'));
+        const dictImg2 = mediaPlaceholder2.getAttribute('data-dict-img2');
+        console.log(mediaPlaceholder2.getAttribute('data-dict-img2'));
+
+        // Load the first image if available
+        if (dictImg) {
+            const mediaElement = await createMediaElement(dictImg);
+            mediaPlaceholder.innerHTML = mediaElement;
+        }
+
+        // Load the second image if available
+        if (dictImg2) {
+            const mediaElement = await createMediaElement(dictImg2);
+            mediaPlaceholder2.innerHTML = mediaElement;
+        }
+
+        // Set the data attribute to indicate that the media has been loaded
+        media.dataset.loaded = 'true';
+    }
 
     // Toggle the visibility of the image
     if (media.style.display === 'none' || media.style.display === '') {
@@ -182,12 +207,6 @@ function createDictionaryEntry(data, insertAfter = null, fromLink = false) {
 
     let docId;
 
-    // if (data.entryId) {
-    //     docId = data.entryId;
-    // } else if (insertAfter) {
-    //     docId = insertAfter;
-    // }
-
     docId = data.entryId;
 
     // Parse dictDef for references and create dynamic links
@@ -204,9 +223,10 @@ function createDictionaryEntry(data, insertAfter = null, fromLink = false) {
     }
     entry.setAttribute('data-doc-id', docId);
 
-    // Initialize mediaHtml and mediaHtml2 with placeholders
-    let mediaHtml = data.dictImg ? '<div class="mediaPlaceholder">Loading image...</div>' : '';
-    let mediaHtml2 = data.dictImg2 ? '<div class="mediaPlaceholder">Loading image...</div>' : '';
+    /// Initialize mediaHtml and mediaHtml2 with placeholders and lazy load attributes
+    let mediaHtml = data.dictImg ? `<div class="mediaPlaceholder" data-dict-img="${data.dictImg}">Loading image...</div>` : '';
+    let mediaHtml2 = data.dictImg2 ? `<div class="mediaPlaceholder" data-dict-img2="${data.dictImg2}">Loading image...</div>` : '';
+
 
     entry.innerHTML = `
         <p class="dictTag">${data.dictTag}
@@ -225,10 +245,6 @@ function createDictionaryEntry(data, insertAfter = null, fromLink = false) {
         </div>
     `;
 
-
-
-
-
     // Insert the entry after the specified position or append it to the end
     const dictionaryContainer = document.getElementById('dictionary-container');
     if (insertAfter) {
@@ -243,27 +259,8 @@ function createDictionaryEntry(data, insertAfter = null, fromLink = false) {
         dictionaryContainer.appendChild(entry);
     }
 
-    // Handle media loading without awaiting
-    if (data.dictImg) {
-        createMediaElement(data.dictImg).then(media => {
-            const mediaDiv = entry.querySelector('.dictMedia .mediaPlaceholder:first-child');
-            if (mediaDiv) {
-                mediaDiv.innerHTML = media; // Replace placeholder with actual media
-            }
-        });
-    }
-    if (data.dictImg2) {
-        createMediaElement(data.dictImg2).then(media => {
-            const mediaDiv = entry.querySelector('.dictMedia .mediaPlaceholder:last-child');
-            if (mediaDiv) {
-                mediaDiv.innerHTML = media; // Replace placeholder with actual media
-            }
-        });
-    }
-
     return entry;
 }
-
 
 function createAdminButtons(docId, dictIndex) {
     return `
