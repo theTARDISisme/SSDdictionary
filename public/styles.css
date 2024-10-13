@@ -135,23 +135,16 @@ input.searchBar {
     font-size: .9em;
 }
 
-.dictImg {
-    max-height: 325px;
-    object-fit: contain;
-    max-width: 100%;
-}
-
-.dictVideo {
-    max-height: 400px;
-    max-width: 100%;
-}
-
 .dictMedia {
-    display:none;
+    display: none;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
-.mediaPlaceholder {
-    display: inline-block;
+.dictImg, .dictVideo {
+    max-height: 375px;
+    object-fit: contain;
+    width: 100%;
 }
 
 .dropdownIcon {

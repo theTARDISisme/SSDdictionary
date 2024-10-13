@@ -128,6 +128,26 @@ window.onload = function () {
     refreshSearch();
 }
 
+// Function to set media width dynamically
+async function setMediaDimensions(mediaPlaceholder) {
+    // Wait for the media to load before accessing dimensions
+    const imgElement = mediaPlaceholder.querySelector('.dictImg');
+    const videoElement = mediaPlaceholder.querySelector('.dictVideo');
+
+    // If it's an image, use onload event; if it's a video, use loadedmetadata event
+    if (imgElement) {
+        imgElement.onload = () => {
+            const aspectRatio = imgElement.naturalWidth / imgElement.naturalHeight;
+            mediaPlaceholder.style.width = `${375 * aspectRatio}px`; // 375px is the max height
+        };
+    } else if (videoElement) {
+        videoElement.onloadedmetadata = () => {
+            const aspectRatio = videoElement.videoWidth / videoElement.videoHeight;
+            mediaPlaceholder.style.width = `${375 * aspectRatio}px`; // 375px is the max height
+        };
+    }
+}
+
 // Function to toggle dropdown visibility
 async function toggleDropdown(iconElement) {
     const entry = iconElement.closest('.dictEntry');
@@ -138,29 +158,33 @@ async function toggleDropdown(iconElement) {
     // Check if media is loaded by looking at a data attribute
     if (!media.dataset.loaded) {
         const dictImg = mediaPlaceholder.getAttribute('data-dict-img');
-        console.log(mediaPlaceholder.getAttribute('data-dict-img'));
         const dictImg2 = mediaPlaceholder2.getAttribute('data-dict-img2');
-        console.log(mediaPlaceholder2.getAttribute('data-dict-img2'));
 
         // Load the first image if available
         if (dictImg) {
             const mediaElement = await createMediaElement(dictImg);
             mediaPlaceholder.innerHTML = mediaElement;
+            await setMediaDimensions(mediaPlaceholder);
         }
 
         // Load the second image if available
         if (dictImg2) {
             const mediaElement = await createMediaElement(dictImg2);
             mediaPlaceholder2.innerHTML = mediaElement;
+
+            await setMediaDimensions(mediaPlaceholder2);
+
         }
 
         // Set the data attribute to indicate that the media has been loaded
         media.dataset.loaded = 'true';
+
+
     }
 
     // Toggle the visibility of the image
     if (media.style.display === 'none' || media.style.display === '') {
-        media.style.display = 'block';
+        media.style.display = 'flex';
         iconElement.textContent = '▲'; // Change icon to up arrow
     } else {
         media.style.display = 'none';
