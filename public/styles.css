@@ -136,13 +136,14 @@ input.searchBar {
 }
 
 .dictImg {
-    height: 325px;
+    max-height: 325px;
     object-fit: contain;
-    max-width: fit-content;
+    max-width: 100%;
 }
 
 .dictVideo {
-    height: 400px;
+    max-height: 400px;
+    max-width: 100%;
 }
 
 .dictMedia {

@@ -31,6 +31,23 @@ async function fetchInitialData() {
         await loadLocalData();
     } catch (error) {
         console.error('Error fetching documents:', error);
+
+        // Check if the error is related to quota limits being exceeded
+        if (error.code === 'resource-exhausted') {
+            // Update the UI to show a message that the service is down for the day
+            dictionaryContainer.innerHTML = `
+                <p class="error-message">
+                    Currently unavailable. Daily limit has been reached. Please try again later.
+                </p>
+            `;
+        } else {
+            // Handle other errors
+            dictionaryContainer.innerHTML = `
+                <p class="error-message">
+                    An error occurred while loading the data. Please try again later.
+                </p>
+            `;
+        }
     }
 }
 
@@ -146,12 +163,9 @@ async function fetchContentType(url) {
 
 async function createMediaElement(url) {
     const type = await fetchContentType(url);
-
     if (type === 'image') {
-        console.log("it's an image " + url);
         return `<img class="dictImg" src="${url}" alt="Image">`;
     } else if (type === 'video') {
-        console.log("it's a video");
         return `<video class="dictVideo" autoplay loop muted playsinline>
                     <source src="${url}" type="video/mp4">
                     Your browser does not support the video tag.
