@@ -56,7 +56,7 @@ a:hover {
     box-sizing: border-box;
     display: flex;
     align-items: center;
-    height: 4em;
+    height: 50px;
     transition: all 150ms ease-in-out;
     cursor: pointer;
 }
