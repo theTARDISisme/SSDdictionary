@@ -1,4 +1,4 @@
-const tagOrder = ['RA Diagram', 'Fundamentals', 'Gaps & Alignment', 'Meter System', 'Flats & Exits', 'Circle Moves', 'Follow Moves', 'Beginner', 'Intermediate', 'Advanced', 'Elite', 'Community Moves'];
+const tagOrder = ['The Arena', 'Fundamentals', 'Alignment', 'Meter System', 'Flats & Exits', 'Circle Moves', 'Follow Moves', 'Beginner', 'Intermediate', 'Advanced', 'Elite', 'Community Moves'];
 
 // Array to store local data
 let localData = [];
@@ -114,15 +114,50 @@ window.onload = function () {
 // Function to toggle dropdown visibility
 function toggleDropdown(iconElement) {
     const entry = iconElement.closest('.dictEntry');
-    const image = entry.querySelector('.dictImg');
+    const media = entry.querySelector('.dictMedia');
 
     // Toggle the visibility of the image
-    if (image.style.display === 'none' || image.style.display === '') {
-        image.style.display = 'block';
+    if (media.style.display === 'none' || media.style.display === '') {
+        media.style.display = 'block';
         iconElement.textContent = '▲'; // Change icon to up arrow
     } else {
-        image.style.display = 'none';
+        media.style.display = 'none';
         iconElement.textContent = '▼'; // Change icon to down arrow
+    }
+}
+
+async function fetchContentType(url) {
+    try {
+        const response = await fetch(url, { method: 'HEAD' });
+        const contentType = response.headers.get('Content-Type');
+
+        if (contentType.startsWith('image/')) {
+            return 'image';
+        } else if (contentType.startsWith('video/')) {
+            return 'video';
+        } else {
+            return null;
+        }
+    } catch (error) {
+        console.error('Error fetching content type:', error);
+        return null;
+    }
+}
+
+async function createMediaElement(url) {
+    const type = await fetchContentType(url);
+
+    if (type === 'image') {
+        console.log("it's an image " + url);
+        return `<img class="dictImg" src="${url}" alt="Image">`;
+    } else if (type === 'video') {
+        console.log("it's a video");
+        return `<video class="dictVideo" autoplay loop muted playsinline>
+                    <source src="${url}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>`;
+    } else {
+        return ''; // Return empty if the content type is unknown
     }
 }
 
@@ -154,6 +189,11 @@ function createDictionaryEntry(data, insertAfter = null, fromLink = false) {
         entry.classList.add('fromLink');
     }
     entry.setAttribute('data-doc-id', docId);
+
+    // Initialize mediaHtml and mediaHtml2 with placeholders
+    let mediaHtml = data.dictImg ? '<div class="mediaPlaceholder">Loading image...</div>' : '';
+    let mediaHtml2 = data.dictImg2 ? '<div class="mediaPlaceholder">Loading image...</div>' : '';
+
     entry.innerHTML = `
         <p class="dictTag">${data.dictTag}
         ${fromLink ? `<span class="closeEntryButton buttonIcon" onclick="closeEntry(this)">×</span>` : ''}</p>
@@ -163,9 +203,14 @@ function createDictionaryEntry(data, insertAfter = null, fromLink = false) {
             <p class="dictName">${data.dictName}</p>
             <p class="dictSpacer">-</p>
             <p class="dictDef">${parsedDictDef}</p>
-            ${data.dictImg ? '<div class="dropdownIcon  buttonIcon" onclick="toggleDropdown(this)">▼</div>' : ''}
+            ${data.dictImg || data.dictImg2 ? '<div class="dropdownIcon  buttonIcon" onclick="toggleDropdown(this)">▼</div>' : ''}
         </div>
-            ${data.dictImg ? `<img class="dictImg" src="${data.dictImg}">` : ''}    `;
+        <div class="dictMedia">
+            ${mediaHtml}
+            ${mediaHtml2}    
+        </div>
+    `;
+
 
 
 
@@ -182,6 +227,24 @@ function createDictionaryEntry(data, insertAfter = null, fromLink = false) {
         }
     } else {
         dictionaryContainer.appendChild(entry);
+    }
+
+    // Handle media loading without awaiting
+    if (data.dictImg) {
+        createMediaElement(data.dictImg).then(media => {
+            const mediaDiv = entry.querySelector('.dictMedia .mediaPlaceholder:first-child');
+            if (mediaDiv) {
+                mediaDiv.innerHTML = media; // Replace placeholder with actual media
+            }
+        });
+    }
+    if (data.dictImg2) {
+        createMediaElement(data.dictImg2).then(media => {
+            const mediaDiv = entry.querySelector('.dictMedia .mediaPlaceholder:last-child');
+            if (mediaDiv) {
+                mediaDiv.innerHTML = media; // Replace placeholder with actual media
+            }
+        });
     }
 
     return entry;

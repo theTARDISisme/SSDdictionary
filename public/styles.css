@@ -136,10 +136,13 @@ input.searchBar {
 }
 
 .dictImg {
-    display: none;
     height: 325px;
     object-fit: contain;
     max-width: fit-content;
+}
+
+.dictMedia {
+    display:none;
 }
 
 .dropdownIcon {

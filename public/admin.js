@@ -13,6 +13,9 @@ firebase.auth().onAuthStateChanged((user) => {
     }
 });
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB size limit for media uploads
+
+
 // Function to move an entry up in Firestore
 async function moveEntryUp(entryId) {
     try {
@@ -119,8 +122,11 @@ function generateNewEntryForm() {
                 <option value="" disabled selected hidden>Category</option>-->
                 <!-- Options dynamically generated from your tagOrder array -->
             </select>
-            <label for="inputDictImg">GIF/Image URL (optional): </label>
-            <input type="text" id="inputDictImg">
+            <label for="inputDictImgFile">Upload Image/Video (optional): </label>
+            <input type="file" id="inputDictImgFile" accept="image/*,video/*">
+            
+            <label for="inputDictImgFile2">Upload Second Image/Video (optional): </label>
+            <input type="file" id="inputDictImgFile2" accept="image/*,video/*">
             <button class="button" type="submit">Add Entry</button>
         </form>
     `;
@@ -156,19 +162,51 @@ function closeEntryForm() {
     entryForm.parentNode.removeChild(entryForm);
 }
 
+// Function to upload media from form
+async function uploadMedia(inputDictImgFile, inputDictName) {
+    // Check file size before upload
+    if (inputDictImgFile.size > MAX_FILE_SIZE) {
+        alert("File is too large. Please select a file smaller than 5MB.");
+    } else {
+        const storageRef = firebase.storage().ref();
+
+        // Get the original file extension (e.g., .jpg, .png)
+        const originalExtension = inputDictImgFile.name.split('.').pop();
+
+        // Generate a unique file name using Firestore ID and original extension
+        const uniqueFileName = `${generateFirestoreId(inputDictName)}.${originalExtension}`;
+        const mediaRef = storageRef.child(`media/${uniqueFileName}`);
+
+        // Upload the file to Firebase Storage
+        const snapshot = await mediaRef.put(inputDictImgFile);
+        // Get the download URL
+        return await snapshot.ref.getDownloadURL();
+    }
+}
+
 // Function to create a new entry in Firestore
 async function addEntry() {
     const inputDictName = document.getElementById('inputDictName').value.trim();
     const inputDictDef = document.getElementById('inputDictDef').value.trim();
     const inputDictTag = document.getElementById('inputDictTag').value.trim();
-    const inputDictImg = document.getElementById('inputDictImg').value.trim();
+    const inputDictImgFile = document.getElementById('inputDictImgFile').files[0];
+    const inputDictImgFile2 = document.getElementById('inputDictImgFile2').files[0];
+
 
     // Reference to the Firestore collection
     const dictionaryCollection = db.collection('dict').doc('dictionary'); // Update with your actual collection name and document ID
-
+    let mediaUrl
+    let mediaUrl2
     try {
         // Generate a unique entryId
         const entryId = generateFirestoreId(inputDictName);
+
+        if (inputDictImgFile){
+            mediaUrl = await uploadMedia(inputDictImgFile, inputDictName);
+        }
+        if (inputDictImgFile2) {
+            mediaUrl2 = await uploadMedia(inputDictImgFile2, inputDictName);
+        }
 
         // Get the current data from Firestore
         const dictionaryData = (await dictionaryCollection.get()).data();
@@ -189,7 +227,8 @@ async function addEntry() {
                 dictName: inputDictName,
                 dictDef: inputDictDef,
                 dictTag: inputDictTag,
-                dictImg: inputDictImg,
+                dictImg: mediaUrl,
+                dictImg2: mediaUrl2,
                 dictIndex: newIndex
             }
         });
@@ -262,8 +301,14 @@ function generateEditEntryForm(entryId) {
                 <option value="" disabled selected hidden>Category</option>-->
                 <!-- Options dynamically generated from your tagOrder array -->
             </select>
-            <label for="inputEditDictImg">GIF/Image URL (optional): </label>
-            <input type="text" id="inputEditDictImg">
+            <label for="inputEditDictImgUrl">Current Image/Video URL: </label>
+            <input type="text" id="inputEditDictImgUrl">
+            <label for="inputEditDictImgFile">Upload New Image/Video: </label>
+            <input type="file" id="inputEditDictImgFile" accept="image/*,video/*">
+            <label for="inputEditDictImgUrl2">Current Second Image/Video URL: </label>
+            <input type="text" id="inputEditDictImgUrl2">
+            <label for="inputEditDictImgFile2">Upload New Second Image/Video: </label>
+            <input type="file" id="inputEditDictImgFile2" accept="image/*,video/*">
             <button class="button" type="submit">Update Entry</button>
         </form>
     `;
@@ -298,7 +343,8 @@ function openEditEntryForm(entryId) {
     const inputDictName = document.getElementById('inputEditDictName');
     const inputDictDef = document.getElementById('inputEditDictDef');
     const inputDictTag = document.getElementById('inputEditDictTag');
-    const inputDictImg = document.getElementById('inputEditDictImg');
+    const inputDictImgUrl = document.getElementById('inputEditDictImgUrl');
+    const inputDictImgUrl2 = document.getElementById('inputEditDictImgUrl2');
 
     // Get the 'dictionary' document
     dictionaryCollection.get()
@@ -310,7 +356,8 @@ function openEditEntryForm(entryId) {
                     inputDictName.value = data[entryId].dictName;
                     inputDictDef.value = data[entryId].dictDef;
                     inputDictTag.value = data[entryId].dictTag;
-                    inputDictImg.value = data[entryId].dictImg || '';
+                    inputDictImgUrl.value = data[entryId].dictImg || '';
+                    inputDictImgUrl2.value = data[entryId].dictImg2 || '';
                 } else {
                     console.error('Entry not found:', entryId);
                 }
@@ -333,7 +380,10 @@ async function updateEntry(entryId) {
     const inputDictName = document.getElementById('inputEditDictName');
     const inputDictDef = document.getElementById('inputEditDictDef');
     const inputDictTag = document.getElementById('inputEditDictTag');
-    const inputDictImg = document.getElementById('inputEditDictImg');
+    const inputDictImgUrl = document.getElementById('inputEditDictImgUrl');
+    const inputDictImgFile = document.getElementById('inputEditDictImgFile').files[0];
+    const inputDictImgUrl2 = document.getElementById('inputEditDictImgUrl2');
+    const inputDictImgFile2 = document.getElementById('inputEditDictImgFile2').files[0];
 
     try {
         // Get the 'dictionary' document
@@ -351,7 +401,22 @@ async function updateEntry(entryId) {
             data[entryId].dictName = inputDictName.value;
             data[entryId].dictDef = inputDictDef.value;
             data[entryId].dictTag = inputDictTag.value;
-            data[entryId].dictImg = inputDictImg.value || null;
+
+            if (inputDictImgFile) {
+                // If a new image is provided, upload it and get the URL
+                data[entryId].dictImg = await uploadMedia(inputDictImgFile, inputDictName.value);
+            } else {
+                // Otherwise, use the provided URL in the text input
+                data[entryId].dictImg = inputDictImgUrl.value || null;
+            }
+
+            if (inputDictImgFile2) {
+                // If a new image is provided, upload it and get the URL
+                data[entryId].dictImg2 = await uploadMedia(inputDictImgFile2, inputDictName.value);
+            } else {
+                // Otherwise, use the provided URL in the text input
+                data[entryId].dictImg2 = inputDictImgUrl2.value || null;
+            }
 
             // Ensure dictIndex remains unchanged
             const oldEntry = data[entryId];
