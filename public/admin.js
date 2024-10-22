@@ -116,7 +116,7 @@ function generateNewEntryForm() {
             <input type="text" id="inputDictName" required>
             <label for="inputDictDef">Definition: </label>
             <textarea id="inputDictDef" required></textarea>
-            <span class="entryFormNotice">To embed links to another entry, use {{Entry Name}} or {{Display Text}}(Entry Name)</span>
+            <span class="entryFormNotice">To embed links to another entry, use {{Entry Name}} or {{Entry Name}}(Display Text)</span>
             <label for="inputDictTag">Category: </label>
             <select id="inputDictTag" required>
                 <option value="" disabled selected hidden>Category</option>-->
@@ -295,7 +295,7 @@ function generateEditEntryForm(entryId) {
             <input type="text" id="inputEditDictName" required>
             <label for="inputEditDictDef">Definition: </label>
             <textarea id="inputEditDictDef" required></textarea>
-            <span class="entryFormNotice">To embed links to another entry, use {{Entry Name}} or {{Display Text}}(Entry Name)</span>
+            <span class="entryFormNotice">To embed links to another entry, use {{Entry Name}} or {{Entry Name}}(Display Text)</span>
             <label for="inputEditDictTag">Category: </label>
             <select id="inputEditDictTag" required>
                 <option value="" disabled selected hidden>Category</option>-->
