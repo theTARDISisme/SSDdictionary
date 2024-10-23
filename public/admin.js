@@ -50,6 +50,12 @@ async function moveEntryUp(entryId) {
             };
 
             await dictionaryCollection.update(updates);
+        } else {
+            const updates = {
+                [`${entryId}.dictIndex`]: currentEntryIndex - 1,
+            };
+
+            await dictionaryCollection.update(updates);
         }
 
         // Refresh the displayed entries after moving
@@ -260,6 +266,14 @@ function generateFirestoreId(inputDictName) {
 
 // Function to delete an entry from Firestore
 async function deleteEntry(entryId) {
+    // Display a confirmation dialog
+    const confirmation = confirm("Are you sure you want to delete this entry? This action cannot be undone.");
+
+    if (!confirmation) {
+        // If the user clicks "Cancel", do nothing
+        return;
+    }
+
     // Reference to the Firestore collection
     const dictionaryCollection = db.collection('dict').doc('dictionary'); // Update with your actual collection name and document ID
 
