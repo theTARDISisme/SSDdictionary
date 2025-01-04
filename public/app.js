@@ -185,10 +185,10 @@ async function toggleDropdown(iconElement) {
     // Toggle the visibility of the image
     if (media.style.display === 'none' || media.style.display === '') {
         media.style.display = 'flex';
-        iconElement.textContent = '▲'; // Change icon to up arrow
+        iconElement.innerHTML = '<span title="Collapse Media">▲</span>'; // Change icon to up arrow
     } else {
         media.style.display = 'none';
-        iconElement.textContent = '▼'; // Change icon to down arrow
+        iconElement.innerHTML = '<span title="Expand Media">▼</span>'; // Change icon to down arrow
     }
 }
 
@@ -253,15 +253,16 @@ function createDictionaryEntry(data, insertAfter = null, fromLink = false) {
 
 
     entry.innerHTML = `
-        <p class="dictTag">${data.dictTag}
-        ${fromLink ? `<span class="closeEntryButton buttonIcon" onclick="closeEntry(this)">×</span>` : ''}</p>
+        
         
         <div class="dictText">
             ${isAdminPage ? createAdminButtons(data.entryId, data.dictIndex) : ''}
             <p class="dictName">${data.dictName}</p>
             <p class="dictSpacer">-</p>
             <p class="dictDef">${parsedDictDef}</p>
-            ${data.dictImg || data.dictImg2 ? '<div class="dropdownIcon  buttonIcon" onclick="toggleDropdown(this)">▼</div>' : ''}
+            <p class="dictTag">${data.dictTag}
+        ${fromLink ? `<span class="closeEntryButton buttonIcon" onclick="closeEntry(this)">×</span>` : ''}</p>
+            ${data.dictImg || data.dictImg2 ? '<div class="dropdownIcon  buttonIcon" onclick="toggleDropdown(this)"><i title="Load Media" class="fa-solid fa-photo-film"></i></div>' : ''}
         </div>
         <div class="dictMedia">
             ${mediaHtml}

@@ -1,17 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&display=swap');
+
+html {
+    --primary-color: #4d2e60; /* #253d5b */
+    --secondary-color: #68498c; /* #345681 */
+    --link-color: #e8d1ff; /* #5686bf */
+    --background-color: #afa2b6; /* #a2a7b6 */
+}
+
 body {
-    font-family: Georgia, serif;
+    font-family: "Aleo", serif;
     margin: 0;
-    background-color: #a2a7b6;
+    background-color: var(--background-color);
 }
 
 a {
-    color: #253d5b;
+    color: var(--primary-color);
     font-weight: bold;
     transition: color 150ms ease-in-out;
 }
 
 a:hover {
-    color: #5686bf;
+    color: var(--secondary-color);
 }
 
 .container {
@@ -42,7 +51,7 @@ a:hover {
 }
 
 .button {
-    background-color: #253d5b;
+    background-color: var(--primary-color);
     color: #ffffff;
     border: none;
     min-width: 100px;
@@ -97,7 +106,7 @@ input.searchBar {
     display: flex;
     gap: 10px;
     flex-direction: column;
-    background-color: #253d5b;
+    background-color: var(--primary-color);
     color: #ffffff;
     padding: 20px;
     font-size: 1.1em;
@@ -111,6 +120,7 @@ input.searchBar {
     display: flex;
     gap: 20px;
     align-items: center;
+    position: relative;
 }
 
 .dictName {
@@ -124,13 +134,13 @@ input.searchBar {
 }
 
 .dictLink:hover {
-    color: #bdbdbd;
+    color: var(--background-color);
 }
 
 .dictTag {
     position: absolute;
-    top: 15px;
-    right: 15px;
+    top: 0;
+    right: 0;
     margin: 0;
     font-size: .9em;
 }
@@ -149,8 +159,8 @@ input.searchBar {
 
 .dropdownIcon {
     position: absolute;
-    right: 15px;
-    top: 60px;
+    right: 0;
+    bottom: 0;
 }
 
 .buttonIcon {
@@ -162,7 +172,7 @@ input.searchBar {
 }
 
 .fromLink {
-    background-color: #345681;
+    background-color: var(--secondary-color);
 }
 
 .sticky {
