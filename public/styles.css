@@ -176,12 +176,10 @@ input.searchBar {
     background-color: var(--secondary-color);
 }
 
-.sticky {
+#search-container.sticky {
     position: fixed;
     top: 0;
     left: 0;
-    animation: fadeInDown 0.5s;
-    z-index: 1;
 }
 
 #search-container {
@@ -189,6 +187,9 @@ input.searchBar {
     background-color: white;
     display: flex;
     justify-content: center;
+    position: absolute;
+    animation: fadeInDown 0.5s;
+    z-index: 1;
 }
 
 #backToTopBtn {
@@ -214,4 +215,8 @@ span.closeEntryButton {
     font-size: 1.7em;
     line-height: 0.4em;
     padding-left: 5px;
+}
+
+div#dictionary-container {
+    margin-top: 110px;
 }
