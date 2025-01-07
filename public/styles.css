@@ -124,6 +124,10 @@ input.searchBar {
     position: relative;
 }
 
+p.dictDef {
+    margin: 2em 0;
+}
+
 .dictName {
     font-weight: 700;
     flex-basis: min-content;
