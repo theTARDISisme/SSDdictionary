@@ -5,10 +5,11 @@ html {
     --secondary-color: #68498c; /* #345681 */
     --link-color: #e8d1ff; /* #5686bf */
     --background-color: #afa2b6; /* #a2a7b6 */
+    --main-font: 'Aleo';
 }
 
 body {
-    font-family: "Aleo", serif;
+    font-family: var(--main-font), serif;
     margin: 0;
     background-color: var(--background-color);
 }
@@ -57,7 +58,7 @@ a:hover {
     min-width: 100px;
     font-size: 16px;
     font-weight: 700;
-    font-family: Georgia, serif;
+    font-family: var(--main-font), serif;
     font-style: italic;
     text-decoration: none;
     text-align: center;
@@ -87,7 +88,7 @@ input.searchBar {
     padding: 10px;
     border: #000000 1px solid;
     box-sizing: border-box;
-    font-family: Georgia, serif;
+    font-family: var(--main-font), serif;
 }
 
 .searchCategory {
@@ -97,7 +98,7 @@ input.searchBar {
     border: #000000 1px solid;
     border-left: 0;
     box-sizing: border-box;
-    font-family: Georgia, serif;
+    font-family: var(--main-font), serif;
 }
 
 
