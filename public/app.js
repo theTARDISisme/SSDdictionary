@@ -1,4 +1,4 @@
-const tagOrder = ['The Arena', 'Fundamentals', 'Alignment', 'Meter System', 'Flats & Exits', 'Circle Moves', 'Follow Moves', 'Beginner', 'Intermediate', 'Advanced', 'Elite', 'Community Moves'];
+const tagOrder = ['The Arena', 'Fundamentals', 'Alignment', 'Meter System', 'Flats & Exits', 'Circle Moves', 'Follow Moves', 'Beginner', 'Intermediate', 'Advanced', 'Elite'];
 
 // Array to store local data
 let localData = [];
@@ -52,51 +52,77 @@ async function fetchInitialData() {
 }
 
 // Function to load local data with extended search functionality
-async function loadLocalData(searchTerm, searchCategory) {
+async function loadLocalData(searchTerm = '', searchCategory = 'all') {
     const dictionaryContainer = document.getElementById('dictionary-container');
-
-    // Clear existing entries
     dictionaryContainer.innerHTML = '';
 
-    // Filter and sort documents based on the search category and term
+    // Get selected categories
+    const selectedTags = Array.from(document.querySelectorAll('.categoryCheckbox:checked'))
+        .map(cb => cb.value);
+
     const filteredDocs = localData.filter(([entryId, entryData]) => {
+        // First: tag filter (skip if tags selected and current one is not included)
+        if (selectedTags.length > 0 && !selectedTags.includes(entryData.dictTag)) {
+            return false;
+        }
+
+        // Then: text filter
+        const term = searchTerm.toLowerCase();
         switch (searchCategory) {
             case 'dictName':
-                return entryData.dictName.toLowerCase().includes(searchTerm.toLowerCase());
+                return entryData.dictName.toLowerCase().includes(term);
             case 'dictDef':
-                return entryData.dictDef.toLowerCase().includes(searchTerm.toLowerCase());
+                return entryData.dictDef.toLowerCase().includes(term);
             case 'dictTag':
-                return entryData.dictTag.toLowerCase().includes(searchTerm.toLowerCase());
+                return entryData.dictTag.toLowerCase().includes(term);
             case 'all':
-                return (
-                    entryData.dictName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    entryData.dictTag.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    entryData.dictDef.toLowerCase().includes(searchTerm.toLowerCase())
-                );
             default:
-                return false;
+                return (
+                    entryData.dictName.toLowerCase().includes(term) ||
+                    entryData.dictDef.toLowerCase().includes(term)
+                );
         }
     });
 
-    // Sort filtered documents by dictTag and dictIndex
+    // Sort and display like before
     filteredDocs.sort((a, b) => {
         const tagComparison = tagOrder.indexOf(a[1].dictTag) - tagOrder.indexOf(b[1].dictTag);
-        if (tagComparison !== 0) {
-            return tagComparison;
-        }
-        return a[1].dictIndex - b[1].dictIndex;
+        return tagComparison !== 0 ? tagComparison : a[1].dictIndex - b[1].dictIndex;
     });
 
-    // Display sorted documents
     filteredDocs.forEach(([entryId, data]) => {
-        // Pass the entryId along with the data
         const entry = createDictionaryEntry({ ...data, entryId });
         dictionaryContainer.appendChild(entry);
     });
+
     return localData;
 }
 
+function populateCategoryDropdown() {
+    const dropdownContent = document.getElementById('categoryDropdownContent');
+    dropdownContent.innerHTML = '<b>Filter Categories</b>'; // Clear in case it's being re-initialized
 
+    tagOrder.forEach(tag => {
+        const label = document.createElement('label');
+        label.classList.add('block');
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.classList.add('categoryCheckbox');
+        checkbox.value = tag;
+
+        // Add change listener for live filtering
+        checkbox.addEventListener('change', () => {
+            const searchTerm = document.querySelector('.searchBar').value.trim();
+            const searchCategory = document.querySelector('.searchCategory').value;
+            loadLocalData(searchTerm, searchCategory);
+        });
+
+        label.appendChild(checkbox);
+        label.append(` ${tag}`);
+        dropdownContent.appendChild(label);
+    });
+}
 
 async function refreshSearch() {
     // Get values from the search box and dropdown
@@ -110,6 +136,20 @@ async function refreshSearch() {
 
 
 window.onload = function () {
+    populateCategoryDropdown();
+
+
+    document.querySelector('.categoryDropdownToggle').addEventListener('click', function () {
+        this.classList.toggle('active');
+    });
+
+    document.querySelectorAll('.categoryCheckbox').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            const searchTerm = document.querySelector('.searchBar').value.trim();
+            const searchCategory = document.querySelector('.searchCategory').value;
+            loadLocalData(searchTerm, searchCategory);
+        });
+    });
 
 // Function to handle search input changes
     document.querySelector('.searchBar').addEventListener('input', function (event) {
@@ -124,6 +164,19 @@ window.onload = function () {
         const searchCategory = document.querySelector('.searchCategory').value;
         loadLocalData(searchTerm, searchCategory);
     });
+
+    const toggleButton = document.getElementById('categoryFilterButton');
+    const dropdown = document.getElementById('categoryDropdownContent');
+    const dropdownWrapper = document.getElementById('categoryFilter');
+
+    document.addEventListener('click', function (e) {
+        console.log('Clicked:', e.target); // Debug
+        if (!dropdownWrapper.contains(e.target)) {
+            toggleButton.classList.remove('active');
+        }
+    });
+
+
 // Initially load all entries
     refreshSearch();
 }

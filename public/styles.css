@@ -99,6 +99,7 @@ input.searchBar {
     border-left: 0;
     box-sizing: border-box;
     font-family: var(--main-font), serif;
+    width: 130px;
 }
 
 
@@ -223,4 +224,45 @@ span.closeEntryButton {
 
 div#dictionary-container {
     margin-top: 110px;
+}
+
+.categoryFilter {
+    position: relative;
+}
+
+.categoryDropdown {
+    display: none;
+    position: absolute;
+    right:0px;
+    background: white;
+    border: 1px solid #ccc;
+    padding: 0.5rem;
+    max-height: 200px;
+    overflow-y: auto;
+    width: 200px;
+    z-index: 100;
+    border-radius: 8px;
+}
+
+.categoryDropdownToggle.active + .categoryDropdown {
+    display: block;
+}
+
+.categoryDropdownToggle img {
+    height: .8em;
+}
+
+button.categoryDropdownToggle {
+    height: 50px;
+    font-size: 1em;
+    padding: 10px;
+    border: #000000 1px solid;
+    border-left: 0;
+    box-sizing: border-box;
+    font-family: var(--main-font), serif;
+    background-color: white;
+}
+
+label.block {
+    display: block;
 }
