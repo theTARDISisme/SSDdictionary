@@ -13,9 +13,6 @@ firebase.auth().onAuthStateChanged((user) => {
     }
 });
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB size limit for media uploads
-
-
 // Function to move an entry up in Firestore
 async function moveEntryUp(entryId) {
     try {
@@ -171,8 +168,6 @@ function closeEntryForm() {
 // Cloudinary config — fill these in
 const CLOUDINARY_CLOUD_NAME = 'dasbxvqpv'; // already known from your URLs
 const CLOUDINARY_UPLOAD_PRESET = 'unsigned_upload'; // from Cloudinary dashboard → Settings → Upload Presets
-
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 async function uploadMedia(file, dictName) {
     if (file.size > MAX_FILE_SIZE) {
