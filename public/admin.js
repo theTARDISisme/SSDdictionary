@@ -168,25 +168,49 @@ function closeEntryForm() {
     entryForm.parentNode.removeChild(entryForm);
 }
 
-// Function to upload media from form
-async function uploadMedia(inputDictImgFile, inputDictName) {
-    // Check file size before upload
-    if (inputDictImgFile.size > MAX_FILE_SIZE) {
+// Cloudinary config — fill these in
+const CLOUDINARY_CLOUD_NAME = 'dasbxvqpv'; // already known from your URLs
+const CLOUDINARY_UPLOAD_PRESET = 'unsigned_upload'; // from Cloudinary dashboard → Settings → Upload Presets
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+async function uploadMedia(file, dictName) {
+    if (file.size > MAX_FILE_SIZE) {
         alert("File is too large. Please select a file smaller than 5MB.");
-    } else {
-        const storageRef = firebase.storage().ref();
+        return null;
+    }
 
-        // Get the original file extension (e.g., .jpg, .png)
-        const originalExtension = inputDictImgFile.name.split('.').pop();
+    // Determine if image or video based on file type
+    const isVideo = file.type.startsWith('video/');
+    const resourceType = isVideo ? 'video' : 'image';
 
-        // Generate a unique file name using Firestore ID and original extension
-        const uniqueFileName = `${generateFirestoreId(inputDictName)}.${originalExtension}`;
-        const mediaRef = storageRef.child(`media/${uniqueFileName}`);
+    // Generate a filename slug from the entry name (same style as before)
+    const randomString = Math.random().toString(36).substring(2, 7);
+    const baseName = dictName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const publicId = `${baseName}-${randomString}`;
 
-        // Upload the file to Firebase Storage
-        const snapshot = await mediaRef.put(inputDictImgFile);
-        // Get the download URL
-        return await snapshot.ref.getDownloadURL();
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    formData.append('public_id', publicId);
+
+    try {
+        const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
+            { method: 'POST', body: formData }
+        );
+
+        if (!response.ok) {
+            throw new Error(`Upload failed: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        return data.secure_url;
+
+    } catch (error) {
+        console.error('Error uploading to Cloudinary:', error);
+        alert('Upload failed. Please try again.');
+        return null;
     }
 }
 
