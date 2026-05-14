@@ -46,6 +46,14 @@
     margin: 0;
 }
 
+.adminButtons .buttonIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    min-height: 18px;
+}
+
 .entryForm {
     position: fixed;
     z-index: 1;
@@ -129,4 +137,24 @@
 
 .categoryFilter {
     margin-right: 10px;
+}
+
+.adminMaintenance {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin: 110px 0 20px;
+}
+
+.adminMaintenance .button {
+    display: inline-flex;
+}
+
+#routineFlushStatus {
+    margin: 0;
+}
+
+.adminMaintenance + #adminDictionaryContainer + div#dictionary-container {
+    margin-top: 20px;
 }

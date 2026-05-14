@@ -1,17 +1,88 @@
 //Check if the user is authenticated
-firebase.auth().onAuthStateChanged((user) => {
-    if (user) {
-        // User is signed in
-        console.log('User is signed in:', user);
+firebase.auth().onAuthStateChanged(async (user) => {
+    if (!user || user.isAnonymous) {
+        window.location.href = '/login';
+        return;
+    }
 
-        // You can load the content of your admin.html page here
-    } else {
-        // User is signed out
-        console.log('User is signed out');
-        // Redirect to the login page if not authenticated
+    try {
+        if (!(await isAdminUser(user))) {
+            window.location.href = '/login';
+        }
+    } catch (error) {
+        console.error('Error checking admin access:', error);
         window.location.href = '/login';
     }
 });
+
+const GUEST_ROUTINE_CLEANUP_DAYS = 7;
+const BATCH_DELETE_LIMIT = 450;
+
+async function flushOldAnonymousRoutines() {
+    const status = document.getElementById('routineFlushStatus');
+    const cutoff = Date.now() - (GUEST_ROUTINE_CLEANUP_DAYS * 24 * 60 * 60 * 1000);
+
+    if (!confirm(`Delete guest routines older than ${GUEST_ROUTINE_CLEANUP_DAYS} days?`)) {
+        return;
+    }
+
+    setRoutineFlushStatus('Finding old guest routines...');
+
+    try {
+        const snapshot = await db.collection('routines')
+            .where('ownerIsAnonymous', '==', true)
+            .get();
+
+        const oldDocs = snapshot.docs.filter(doc => {
+            const data = doc.data();
+            const createdAt = getFirestoreMillis(data.createdAt || data.updatedAt);
+            return createdAt > 0 && createdAt < cutoff;
+        });
+
+        if (oldDocs.length === 0) {
+            setRoutineFlushStatus('No old guest routines found.');
+            return;
+        }
+
+        let deletedCount = 0;
+        for (let index = 0; index < oldDocs.length; index += BATCH_DELETE_LIMIT) {
+            const batch = db.batch();
+            oldDocs.slice(index, index + BATCH_DELETE_LIMIT).forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+            deletedCount += Math.min(BATCH_DELETE_LIMIT, oldDocs.length - index);
+            setRoutineFlushStatus(`Deleted ${deletedCount} of ${oldDocs.length} old guest routines...`);
+        }
+
+        setRoutineFlushStatus(`Deleted ${deletedCount} old guest routine${deletedCount === 1 ? '' : 's'}.`);
+    } catch (error) {
+        console.error('Error flushing old guest routines:', error);
+        setRoutineFlushStatus('Unable to flush old guest routines. Check console for details.');
+    }
+
+    function setRoutineFlushStatus(message) {
+        if (status) {
+            status.textContent = message;
+        }
+    }
+}
+
+function getFirestoreMillis(timestamp) {
+    if (!timestamp) {
+        return 0;
+    }
+
+    if (typeof timestamp.toMillis === 'function') {
+        return timestamp.toMillis();
+    }
+
+    if (timestamp instanceof Date) {
+        return timestamp.getTime();
+    }
+
+    return 0;
+}
 
 // Function to move an entry up in Firestore
 async function moveEntryUp(entryId) {
@@ -56,7 +127,7 @@ async function moveEntryUp(entryId) {
         }
 
         // Refresh the displayed entries after moving
-        refreshSearch();
+        refreshSearch({ refetch: true });
 
     } catch (error) {
         console.error('Error moving entry up:', error);
@@ -97,7 +168,7 @@ async function moveEntryDown(entryId) {
         }
 
         // Refresh the displayed entries after moving
-        refreshSearch();
+        refreshSearch({ refetch: true });
 
     } catch (error) {
         console.error('Error moving entry down:', error);
@@ -162,12 +233,15 @@ function closeEntryForm() {
     const entryForm = document.querySelector('.entryForm');
 
     // Remove the form from the DOM to reset it
-    entryForm.parentNode.removeChild(entryForm);
+    if (entryForm) {
+        entryForm.remove();
+    }
 }
 
 // Cloudinary config — fill these in
 const CLOUDINARY_CLOUD_NAME = 'dasbxvqpv'; // already known from your URLs
 const CLOUDINARY_UPLOAD_PRESET = 'unsigned_upload'; // from Cloudinary dashboard → Settings → Upload Presets
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 async function uploadMedia(file, dictName) {
     if (file.size > MAX_FILE_SIZE) {
@@ -228,9 +302,15 @@ async function addEntry() {
 
         if (inputDictImgFile){
             mediaUrl = await uploadMedia(inputDictImgFile, inputDictName);
+            if (!mediaUrl) {
+                return;
+            }
         }
         if (inputDictImgFile2) {
             mediaUrl2 = await uploadMedia(inputDictImgFile2, inputDictName);
+            if (!mediaUrl2) {
+                return;
+            }
         }
 
         // Get the current data from Firestore
@@ -262,7 +342,7 @@ async function addEntry() {
         closeEntryForm();
 
         // Refresh the displayed entries after adding
-        refreshSearch();
+        refreshSearch({ refetch: true });
     } catch (error) {
         console.error('Error adding entry to Firestore:', error);
     }
@@ -308,7 +388,7 @@ async function deleteEntry(entryId) {
             entryElement.remove();
         }
         // Refresh the displayed entries after deleting
-        refreshSearch();
+        refreshSearch({ refetch: true });
     } catch (error) {
         console.error('Error deleting entry from Firestore:', error);
     }
@@ -429,44 +509,57 @@ async function updateEntry(entryId) {
 
         const data = documentSnapshot.data();
 
-        // Update the entry with the specified ID
-        if (data && data[entryId]) {
-            data[entryId].dictName = inputDictName.value;
-            data[entryId].dictDef = inputDictDef.value;
-            data[entryId].dictTag = inputDictTag.value;
-
-            if (inputDictImgFile) {
-                // If a new image is provided, upload it and get the URL
-                data[entryId].dictImg = await uploadMedia(inputDictImgFile, inputDictName.value);
-            } else {
-                // Otherwise, use the provided URL in the text input
-                data[entryId].dictImg = inputDictImgUrl.value || null;
-            }
-
-            if (inputDictImgFile2) {
-                // If a new image is provided, upload it and get the URL
-                data[entryId].dictImg2 = await uploadMedia(inputDictImgFile2, inputDictName.value);
-            } else {
-                // Otherwise, use the provided URL in the text input
-                data[entryId].dictImg2 = inputDictImgUrl2.value || null;
-            }
-
-            // Ensure dictIndex remains unchanged
-            const oldEntry = data[entryId];
-            data[entryId].dictIndex = oldEntry.dictIndex;
-
-            // Update the 'dictionary' document with the modified data
-            await dictionaryCollection.set(data);
-
-            // Close the edit entry form
-            closeEntryForm();
-
-            // Refresh the displayed entries after updating
-            refreshSearch();
-        } else {
+        if (!data || !data[entryId]) {
             console.log(`Entry with ID ${entryId} not found in the dictionary.`);
+            return;
         }
+
+        const currentEntry = data[entryId];
+        const nextName = inputDictName.value.trim();
+        const nextDef = inputDictDef.value.trim();
+        const nextTag = inputDictTag.value.trim();
+        let nextImg = inputDictImgUrl.value.trim() || null;
+        let nextImg2 = inputDictImgUrl2.value.trim() || null;
+
+        if (inputDictImgFile) {
+            // If a new image is provided, upload it and get the URL
+            nextImg = await uploadMedia(inputDictImgFile, nextName);
+            if (!nextImg) {
+                return;
+            }
+        }
+
+        if (inputDictImgFile2) {
+            // If a new image is provided, upload it and get the URL
+            nextImg2 = await uploadMedia(inputDictImgFile2, nextName);
+            if (!nextImg2) {
+                return;
+            }
+        }
+
+        const updates = {};
+        addChangedEntryField(updates, entryId, 'dictName', currentEntry.dictName, nextName);
+        addChangedEntryField(updates, entryId, 'dictDef', currentEntry.dictDef, nextDef);
+        addChangedEntryField(updates, entryId, 'dictTag', currentEntry.dictTag, nextTag);
+        addChangedEntryField(updates, entryId, 'dictImg', currentEntry.dictImg || null, nextImg);
+        addChangedEntryField(updates, entryId, 'dictImg2', currentEntry.dictImg2 || null, nextImg2);
+
+        if (Object.keys(updates).length > 0) {
+            await dictionaryCollection.update(updates);
+        }
+
+        // Close the edit entry form
+        closeEntryForm();
+
+        // Refresh the displayed entries after updating
+        refreshSearch({ refetch: true });
     } catch (error) {
         console.error('Error updating entry in Firestore:', error);
+    }
+}
+
+function addChangedEntryField(updates, entryId, fieldName, currentValue, nextValue) {
+    if (currentValue !== nextValue) {
+        updates[`${entryId}.${fieldName}`] = nextValue;
     }
 }

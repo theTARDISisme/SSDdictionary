@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <!-- Primary Meta Tags -->
+    <title>Routine Builder - SSD Dictionary</title>
+    <meta name="title" content="Routine Builder - SSD Dictionary">
+    <meta name="description" content="Build and share Star Stable Dressage routines from the searchable SSD dictionary.">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ssddictionary.web.app/routines">
+    <meta property="og:title" content="Routine Builder - SSD Dictionary">
+    <meta property="og:description" content="Build and share Star Stable Dressage routines from the searchable SSD dictionary.">
+    <meta property="og:image" content="https://ssddictionary.web.app/images/social-preview.png">
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://ssddictionary.web.app/routines">
+    <meta property="twitter:title" content="Routine Builder - SSD Dictionary">
+    <meta property="twitter:description" content="Build and share Star Stable Dressage routines from the searchable SSD dictionary.">
+    <meta property="twitter:image" content="https://ssddictionary.web.app/images/social-preview.png">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+    <script src="https://kit.fontawesome.com/c11e4bdbae.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="header">
+    <div>
+        <h1>SSD Dictionary Web App - Routine Builder</h1>
+        <p>The <i>Unofficial</i>, Searchable Star Stable Dressage Dictionary Database</p>
+        <p>Entries and media sourced from <a href="https://www.starstabledressage.com/" target="_blank">Star Stable Dressage</a>. This website has no affiliation with SSD.</p>
+        <p>To report bugs or provide feedback, join the <a href="https://discord.gg/NfwwVBD6vq" target="_blank">Discord Server</a>.</p>
+        <p>Created by Antonia Majorsnake and Rose Cherryleaf.</p>
+        <p><a href="/">Back to Dictionary</a></p>
+    </div>
+</div>
+
+<div id="search-container">
+    <div class="searchArea container">
+        <input type="text" class="searchBar" id="search-bar" placeholder="Search moves to add">
+        <select class="searchCategory">
+            <optgroup label = "Search By">
+                <option value="all">All</option>
+                <option value="dictName">Move Name</option>
+                <option value="dictDef">Definition</option>
+            </optgroup>
+        </select>
+        <div class="categoryFilter relative" id="categoryFilter">
+            <button type="button" class="categoryDropdownToggle" id="categoryFilterButton">
+                <img src="images/bars-filter.svg">
+            </button>
+            <div class="categoryDropdown">
+                <div id="categoryDropdownContent" style="overflow-y: scroll; max-height: 200px;">
+                    <!-- Checkboxes will be injected here -->
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container routinesPage">
+
+    <div class="routineLayout">
+        <aside class="routineLibrary">
+            <div class="routineLibraryHeader">
+                <h2>My Routines</h2>
+                <button type="button" class="routineButton" id="routine-new-btn">New</button>
+            </div>
+            <div class="routineAuth">
+                <p id="routine-auth-status">Checking sign-in...</p>
+                <div class="routineAuthActions">
+                    <button type="button" class="routineButton googleSignInButton" id="routine-google-btn" title="Sign in with Google to save routines permanently">
+                        <svg class="googleIcon" aria-hidden="true" viewBox="0 0 18 18" focusable="false">
+                            <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.12-.84 2.07-1.8 2.71v2.25h2.92c1.7-1.57 2.68-3.88 2.68-6.6z"></path>
+                            <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.2l-2.92-2.25c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.32C2.44 15.98 5.49 18 9 18z"></path>
+                            <path fill="#FBBC05" d="M3.97 10.71c-.18-.54-.28-1.12-.28-1.71s.1-1.17.28-1.71V4.97H.96C.35 6.18 0 7.55 0 9s.35 2.82.96 4.03l3.01-2.32z"></path>
+                            <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.49 0 2.44 2.02.96 4.97l3.01 2.32C4.68 5.16 6.66 3.58 9 3.58z"></path>
+                        </svg>
+                        <span class="googleButtonText">Sign in to save</span>
+                    </button>
+                    <button type="button" class="routineButton" id="routine-signout-btn" hidden>Sign Out</button>
+                </div>
+            </div>
+            <p class="routineLibraryStatus" id="routine-library-status"></p>
+            <div class="routineList" id="routine-list"></div>
+        </aside>
+
+        <main id="routine-panel" class="routinePanel">
+            <div class="routineTop">
+                <label class="routineTitleField" for="routine-title">
+                    <span>Current Routine</span>
+                    <input type="text" id="routine-title" maxlength="80" placeholder="Untitled routine">
+                </label>
+                <div class="routineActions">
+                    <button type="button" class="routineButton presentationKeep" id="routine-view-btn">View Mode</button>
+                    <button type="button" class="routineButton" id="routine-add-note-btn">Add Note</button>
+                    <button type="button" class="routineButton" id="routine-share-btn">Share</button>
+                </div>
+            </div>
+            <p class="routineStatus" id="routine-status"></p>
+            <div class="routineShareBox" id="routine-share-box" hidden>
+                <input type="text" id="routine-share-link" readonly>
+            </div>
+            <div class="routineItems" id="routine-items"></div>
+        </main>
+    </div>
+
+    <section class="routineMovePicker">
+        <h2>Add Moves</h2>
+        <div class="results" id="dictionary-container">
+            <div id="loading-indicator">Loading...</div>
+        </div>
+    </section>
+</div>
+
+<button class="button" id="backToTopBtn" title="Go to top">&#9650;</button>
+
+</body>
+</html>

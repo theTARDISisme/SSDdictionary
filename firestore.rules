@@ -2,8 +2,81 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isStaffUser() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isAnonymousUser() {
+      return isSignedIn()
+        && request.auth.token.firebase.sign_in_provider == 'anonymous';
+    }
+
+    function isValidRoutine() {
+      return request.resource.data.keys().hasOnly([
+        'title',
+        'ownerUid',
+        'ownerIsAnonymous',
+        'items',
+        'createdAt',
+        'updatedAt'
+      ])
+        && request.resource.data.keys().hasAll([
+          'title',
+          'ownerUid',
+          'ownerIsAnonymous',
+          'items',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() <= 80
+        && request.resource.data.ownerUid is string
+        && request.resource.data.ownerIsAnonymous is bool
+        && request.resource.data.items is list
+        && request.resource.data.items.size() <= 200
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.ownerIsAnonymous == isAnonymousUser();
+    }
+
+    match /dict/{document} {
+      allow read: if true;
+      allow write: if isStaffUser();
+    }
+
+    match /admins/{adminId} {
+      allow read: if isSignedIn()
+        && request.auth.uid == adminId;
+      allow write: if isStaffUser();
+    }
+
+    match /routines/{routineId} {
+      allow get: if true;
+      allow list: if isStaffUser()
+        || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
+      allow create: if isSignedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && isValidRoutine();
+      allow update: if isSignedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time
+        && isValidRoutine();
+      allow delete: if isStaffUser()
+        || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
+    }
+
     match /{document=**} {
-      allow read, write: if false;
+      allow read: if false;
+      allow write: if isStaffUser();
     }
   }
 }
