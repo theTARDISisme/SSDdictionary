@@ -640,6 +640,93 @@ body.routineDragging {
     overflow-wrap: anywhere;
 }
 
+.routineNoteDisplay .routineNoteLine:empty::after {
+    content: "\00a0";
+}
+
+.routineNoteDisplay a {
+    color: #0645ad;
+    text-decoration: underline;
+}
+
+.routineNoteDisplay .routineNoteSubtext {
+    color: #666666;
+    font-size: .8em;
+}
+
+.routineNoteListLine {
+    display: flex;
+    gap: .5em;
+    padding-left: calc(var(--routine-list-level, 0) * 1.5em);
+}
+
+.routineNoteListMarker {
+    min-width: 1.25em;
+    text-align: right;
+}
+
+.routineNoteQuote {
+    margin: 0;
+    padding: 2px 0 2px 10px;
+    border-left: 4px solid #8f8f8f;
+    color: #333333;
+}
+
+.routineNoteInlineCode,
+.routineNoteCodeBlock {
+    border-radius: 4px;
+    background-color: #eeeeee;
+    font-family: Consolas, Monaco, "Courier New", monospace;
+}
+
+.routineNoteInlineCode {
+    padding: .1em .3em;
+    font-size: .9em;
+}
+
+.routineNoteCodeBlock {
+    margin: 0;
+    padding: 10px 12px;
+    overflow-x: auto;
+    white-space: pre;
+}
+
+.routineNoteSpoiler {
+    border-radius: 3px;
+    background-color: #222222;
+    color: transparent;
+    cursor: pointer;
+    user-select: none;
+}
+
+.routineNoteSpoiler:hover,
+.routineNoteSpoiler:focus,
+.routineNoteSpoiler.revealed {
+    background-color: #dddddd;
+    color: inherit;
+    outline: none;
+    user-select: text;
+}
+
+.routineNoteDisplay h2,
+.routineNoteDisplay h3,
+.routineNoteDisplay h4 {
+    margin: 0;
+    line-height: 1.25;
+}
+
+.routineNoteDisplay .routineNoteHeading1 {
+    font-size: 1.5em;
+}
+
+.routineNoteDisplay .routineNoteHeading2 {
+    font-size: 1.3em;
+}
+
+.routineNoteDisplay .routineNoteHeading3 {
+    font-size: 1.15em;
+}
+
 .routineToast {
     position: fixed;
     left: 50%;

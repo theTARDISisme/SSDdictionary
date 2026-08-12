@@ -1,3 +1,6 @@
+// todo - make "unsaved changes" popup before leaving routine with unsaved changes
+// todo - make it so that the admin delete old routines button also deletes inactive anonymous accounts themselves if they have no associated routines within the past 7 days (to prevent orphaned accounts and save space, since anonymous accounts are only needed if the user has active routines that they want to keep editing without signing in)
+
 const tagOrder = ['The Arena', 'Fundamentals', 'Alignment', 'Meter System', 'Flats & Exits', 'Circle Moves', 'Follow Moves', 'Beginner', 'Intermediate', 'Advanced', 'Elite'];
 
 // Array to store local data
@@ -1169,7 +1172,7 @@ function createRoutineItemElement(item, index) {
 
     if (item.type === 'note') {
         if (isEditing) {
-            main.appendChild(createRoutineTextarea(item.text || '', 'Note text', false, value => {
+            main.appendChild(createRoutineTextarea(item.text || '', 'Note text — supports Markdown', false, value => {
                 item.text = value;
                 scheduleRoutineSave();
             }));
@@ -1196,7 +1199,7 @@ function createRoutineItemElement(item, index) {
         }
 
         if (isEditing) {
-            main.appendChild(createRoutineTextarea(item.note || '', 'Notes for this move', false, value => {
+            main.appendChild(createRoutineTextarea(item.note || '', 'Notes — supports Markdown', false, value => {
                 item.note = value;
                 scheduleRoutineSave();
             }));
@@ -1219,13 +1222,232 @@ function createRoutineItemElement(item, index) {
 }
 
 function createRoutineNoteDisplay(text, isStandalone = false) {
-    const note = document.createElement('p');
+    const note = document.createElement('div');
     note.classList.add('routineNoteDisplay');
     if (isStandalone) {
         note.classList.add('routineStandaloneNote');
     }
-    note.textContent = text;
+
+    appendRoutineBlockMarkup(note, String(text));
+
     return note;
+}
+
+function appendRoutineBlockMarkup(container, text) {
+    const lines = text.replace(/\r\n?/g, '\n').split('\n');
+
+    for (let index = 0; index < lines.length; index++) {
+        const line = lines[index];
+        const codeFence = line.match(/^```([^`]*)$/);
+
+        if (codeFence) {
+            const codeLines = [];
+            while (++index < lines.length && !/^```\s*$/.test(lines[index])) {
+                codeLines.push(lines[index]);
+            }
+            const pre = document.createElement('pre');
+            pre.classList.add('routineNoteCodeBlock');
+            const code = document.createElement('code');
+            code.textContent = codeLines.join('\n');
+            if (codeFence[1].trim()) {
+                code.dataset.language = codeFence[1].trim();
+            }
+            pre.appendChild(code);
+            container.appendChild(pre);
+            continue;
+        }
+
+        const multiQuote = line.match(/^>>>[\t ]?(.*)$/);
+        if (multiQuote) {
+            const quote = document.createElement('blockquote');
+            quote.classList.add('routineNoteQuote');
+            appendRoutineMarkupLine(quote, multiQuote[1]);
+            for (index += 1; index < lines.length; index++) {
+                appendRoutineMarkupLine(quote, lines[index]);
+            }
+            container.appendChild(quote);
+            break;
+        }
+
+        const header = line.match(/^(#{1,3})[\t ]+(.+)$/);
+        if (header) {
+            const level = header[1].length;
+            const heading = document.createElement(`h${level + 1}`);
+            heading.classList.add(`routineNoteHeading${level}`);
+            appendRoutineInlineMarkup(heading, header[2]);
+            container.appendChild(heading);
+            continue;
+        }
+
+        const subtext = line.match(/^-#[\t ]+(.+)$/);
+        if (subtext) {
+            const small = document.createElement('div');
+            small.classList.add('routineNoteSubtext');
+            appendRoutineInlineMarkup(small, subtext[1]);
+            container.appendChild(small);
+            continue;
+        }
+
+        const listItem = line.match(/^( *)([-*]|\d+\.)[\t ]+(.+)$/);
+        if (listItem) {
+            const listLine = document.createElement('div');
+            listLine.classList.add('routineNoteListLine');
+            listLine.style.setProperty('--routine-list-level', String(Math.floor(listItem[1].length / 2)));
+            const marker = document.createElement('span');
+            marker.classList.add('routineNoteListMarker');
+            marker.textContent = listItem[2] === '-' || listItem[2] === '*' ? '\u2022' : listItem[2];
+            const content = document.createElement('span');
+            appendRoutineInlineMarkup(content, listItem[3]);
+            listLine.append(marker, content);
+            container.appendChild(listLine);
+            continue;
+        }
+
+        const quoteLine = line.match(/^>[\t ]?(.*)$/);
+        if (quoteLine) {
+            const quote = document.createElement('blockquote');
+            quote.classList.add('routineNoteQuote');
+            appendRoutineMarkupLine(quote, quoteLine[1]);
+            container.appendChild(quote);
+            continue;
+        }
+
+        appendRoutineMarkupLine(container, line);
+    }
+}
+
+function appendRoutineMarkupLine(container, text) {
+    const line = document.createElement('div');
+    line.classList.add('routineNoteLine');
+    appendRoutineInlineMarkup(line, text);
+    container.appendChild(line);
+}
+
+function appendRoutineInlineMarkup(element, text) {
+    const delimiters = [
+        { marker: '***', tags: ['strong', 'em'] },
+        { marker: '**', tags: ['strong'] },
+        { marker: '__', tags: ['u'] },
+        { marker: '~~', tags: ['s'] },
+        { marker: '||', tags: ['span'], spoiler: true },
+        { marker: '*', tags: ['em'] },
+        { marker: '_', tags: ['em'] }
+    ];
+    let plainText = '';
+
+    const flushText = () => {
+        if (plainText) {
+            element.appendChild(document.createTextNode(plainText));
+            plainText = '';
+        }
+    };
+
+    for (let index = 0; index < text.length;) {
+        if (text[index] === '\\' && index + 1 < text.length && /[\\`*_{}\[\]()#+\-.!|>~]/.test(text[index + 1])) {
+            plainText += text[index + 1];
+            index += 2;
+            continue;
+        }
+
+        if (text[index] === '`') {
+            const closingIndex = findRoutineClosingMarker(text, '`', index + 1);
+            if (closingIndex !== -1) {
+                flushText();
+                const code = document.createElement('code');
+                code.classList.add('routineNoteInlineCode');
+                code.textContent = text.slice(index + 1, closingIndex);
+                element.appendChild(code);
+                index = closingIndex + 1;
+                continue;
+            }
+        }
+
+        if (text[index] === '[') {
+            const labelEnd = text.indexOf('](', index + 1);
+            const urlEnd = labelEnd === -1 ? -1 : text.indexOf(')', labelEnd + 2);
+            if (labelEnd !== -1 && urlEnd !== -1) {
+                const href = getSafeRoutineMarkupUrl(text.slice(labelEnd + 2, urlEnd));
+                if (href) {
+                    flushText();
+                    const link = document.createElement('a');
+                    link.href = href;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    appendRoutineInlineMarkup(link, text.slice(index + 1, labelEnd));
+                    element.appendChild(link);
+                    index = urlEnd + 1;
+                    continue;
+                }
+            }
+        }
+
+        const delimiter = delimiters.find(option => text.startsWith(option.marker, index));
+        if (delimiter) {
+            const contentStart = index + delimiter.marker.length;
+            const closingIndex = findRoutineClosingMarker(text, delimiter.marker, contentStart);
+            if (closingIndex > contentStart) {
+                flushText();
+                let formatted = null;
+                let contentTarget = null;
+                delimiter.tags.forEach(tag => {
+                    const node = document.createElement(tag);
+                    if (formatted) {
+                        contentTarget.appendChild(node);
+                    } else {
+                        formatted = node;
+                    }
+                    contentTarget = node;
+                });
+                if (delimiter.spoiler) {
+                    formatted.classList.add('routineNoteSpoiler');
+                    formatted.setAttribute('role', 'button');
+                    formatted.tabIndex = 0;
+                    formatted.setAttribute('aria-label', 'Spoiler (click to reveal)');
+                    const revealSpoiler = () => formatted.classList.toggle('revealed');
+                    formatted.addEventListener('click', revealSpoiler);
+                    formatted.addEventListener('keydown', event => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            revealSpoiler();
+                        }
+                    });
+                }
+                appendRoutineInlineMarkup(contentTarget, text.slice(contentStart, closingIndex));
+                element.appendChild(formatted);
+                index = closingIndex + delimiter.marker.length;
+                continue;
+            }
+        }
+
+        plainText += text[index];
+        index += 1;
+    }
+
+    flushText();
+}
+
+function findRoutineClosingMarker(text, marker, startIndex) {
+    let closingIndex = text.indexOf(marker, startIndex);
+    while (closingIndex !== -1) {
+        let backslashCount = 0;
+        for (let index = closingIndex - 1; index >= 0 && text[index] === '\\'; index--) {
+            backslashCount += 1;
+        }
+        if (backslashCount % 2 === 0) {
+            return closingIndex;
+        }
+        closingIndex = text.indexOf(marker, closingIndex + marker.length);
+    }
+    return -1;
+}
+
+function getSafeRoutineMarkupUrl(url) {
+    try {
+        const parsedUrl = new URL(url.trim());
+        return ['http:', 'https:', 'mailto:'].includes(parsedUrl.protocol) ? parsedUrl.href : null;
+    } catch (error) {
+        return null;
+    }
 }
 
 function createRoutineItemTitle(text) {
